@@ -2,6 +2,7 @@ import ee
 from dotenv import load_dotenv
 import os
 
+
 load_dotenv()
 ee.Initialize(project=os.getenv('GEE_PROJECT_ID'))
 

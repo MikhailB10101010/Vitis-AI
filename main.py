@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime
 from pathlib import Path
 
+
 # Windows compatibility fix
 if sys.platform == 'win32':
     class MockModule:
