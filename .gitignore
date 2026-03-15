@@ -4,3 +4,7 @@
 .idea/
 .venv/
 test.ipynb
+
+#docs
+docs/~*
+docs/*.tmp
