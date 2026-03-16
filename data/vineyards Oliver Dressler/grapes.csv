@@ -1,0 +1,756 @@
+id,grape_name
+0,Abbuoto
+1,Abouriou
+2,Acitana
+3,Acolon
+4,Ada Karasi
+5,Affenthaler
+6,Agiorgitiko
+7,Aglianico
+8,Aglianicone
+9,Agua Santa
+10,Aidani Mavro
+11,Aladasturi
+12,Albaranzeuli Nero
+13,Albarossa
+14,Aleatico
+15,Aleksandrouli
+16,Cape Grape
+17,Alfrocheiro
+18,Alicante Henri Bouschet
+19,Allegro
+20,Amaral
+21,Ancellotta
+22,Antey Magarachsky
+23,Aramon Noir
+24,Areni
+25,Argaman
+26,Argant
+27,Arinarnoa
+28,Arinto de Bucelas
+29,Arnsburger
+30,Arrouya
+31,Ashughaji
+32,Aspiran Bouschet
+33,Aspiran Noir
+34,Asuretuli Shavi
+35,Aubun
+36,Avanà
+37,Avarengo
+38,Avgoustiatis
+39,Băbească Neagră
+40,Babić
+41,Bachet Noir
+42,Baco Noir
+43,Baga
+44,Barbera
+45,Barsaglina
+46,Bastardo Magarachsky
+47,Beaunoir
+48,Béclan
+49,Beichun
+50,Bekari
+51,Béquignol Noir
+52,Biborkadarka
+53,Black Queen
+54,Blatina
+55,Blauburger
+56,Pinot Noir
+57,Blauer Wildbacher
+58,Blaufränkisch
+59,Bobal
+60,Boğazkere
+61,Bombino Nero
+62,Bonamico
+63,Bonarda Piemontese
+64,Bondola
+65,Bondoletta
+66,Bonvedro
+67,Borba
+68,Borracal
+69,Bouchalès
+70,Bourrisquou
+71,Bouteillan Noir
+72,Bovale Grande
+73,Bovale Sardo
+74,Bracciola Nera
+75,Brachetto del Piemonte
+76,Brancellao
+77,Braquet Noir
+78,Brugnola
+79,Brujidera
+80,Brun Argenté
+81,Brun Fourca
+82,Brunal
+83,Brunello
+84,Bubbierasco
+85,Busuioaca de Bohotin
+86,Caberinta
+87,Cabernet Carbon
+88,Cabernet Carol
+89,Cabernet Colonjes
+90,Cabernet Cortis
+91,Cabernet Cubin
+92,Cabernet Dorio
+93,Cabernet Dorsa
+94,Cabernet Franc
+95,Cabernet Gernischt
+96,Cabernet Jura
+97,Cabernet Mitos
+98,Cabernet Moravia
+99,Cabernet Pfeffer
+100,Cabernet Sauvignon
+101,Cabernet Severny
+102,Cabertin
+103,Caddiu
+104,Cagnulari
+105,Caino Bravo
+106,Caiño Tinto
+107,Calabrese Nero
+108,Calabrese di Montenuovo
+109,Caladoc
+110,Calandro
+111,Calitor Noir
+112,Çalkarası
+113,Callet
+114,Caloria
+115,Camaraou Noir
+116,Camarate
+117,Camarese
+118,Campbell Early
+119,Canaiolo Nero
+120,Canari Noir
+121,Canina Nera
+122,Cannamela
+123,Carcajolo Nero
+124,Caricagiola
+125,Carignan
+126,Carménère
+127,Carmine
+128,Carminoir
+129,Carnelian
+130,Carrasquin
+131,Carricante
+132,Casavecchia
+133,Casculho
+134,Casetta
+135,Castagnara
+136,Castelão
+137,Castets
+138,Castigliono
+139,Catalanesca
+140,Catanese Nero
+141,Cavrara
+142,Centesimino
+143,Centurion
+144,Cesanese
+145,Cevat Kara
+146,Chambourcin
+147,Charbono
+148,Chancellor
+149,Charentsi
+150,Chatus
+151,Chelois
+152,Chenanson
+153,Chichaud
+154,Chidiriotiko
+155,Chisago
+156,Chkhaveri
+157,Chondromavro
+158,Cianorie
+159,Cienna
+160,Ciliegiolo
+161,Cinsaut
+162,Colombana Nera
+163,Cornalin See Rouge du Pays
+164,Cornifesto
+165,Corvina
+166,Counoise
+167,Croatina
+168,Darnekuša
+169,Dobričić
+170,Dornfelder
+171,Douce Noir
+172,Douce Noire Grise
+173,Dunkelfelder
+174,Dureza
+175,Durif
+176,Ederena
+177,Enfariné Noir
+178,Espadeiro
+179,Étraire
+180,Ferrón
+181,Fetească Neagră
+182,Forcallat Tinta
+183,Fortana
+184,Frappato
+185,Freisa
+186,Frühroter Veltliner
+187,Fumin
+188,Gaglioppo
+189,Gamashara
+190,Gamay Noir
+191,Gamaret
+192,Garanoir
+193,Grenache
+194,Garró
+195,Ġellewża
+196,Girò
+197,Gouget Noir
+198,Graciano Tinto
+199,Grand Noir de La Calmette
+200,Grisa Nera
+201,Greco Nero
+202,Gropello
+203,Grolleau
+204,Gros Verdot
+205,Gueuche Noir
+206,Helfensteiner
+207,Heroldrebe
+208,Hondarribi Beltza
+209,Humagne Rouge
+210,Joubertin
+211,Juan García
+212,Jurancon Noir
+213,Kadarka
+214,Kakhet
+215,Kalecik Karasi
+216,Kindzmarauli
+217,Kotsifali
+218,Krasnostop Zolotovsky
+219,Kratosija
+220,Lacrima di Morro
+221,Lagrein
+222,Lambrusco
+223,Liatiko
+224,Limnio
+225,Listan Negro
+226,Loureira Tinta
+227,Madrasa
+228,Magarach Bastardo
+229,Magaratch Ruby
+230,Magliocco Canino
+231,Magliocco Dolce
+232,Magyarfrankos
+233,Malbec
+234,Malvasia di Schierano
+235,Mammolo
+236,Mandelaria
+237,Mandolari
+238,Manseng Noir
+239,Manto Negro
+240,Maratheftiko
+241,Marselan
+242,Marsigliana
+243,Marzemino
+244,Mauzac Noir
+245,Mavro
+246,Mavrodafni
+247,Mavrud
+248,Mayorquin
+249,Meghrabujr
+250,Mencía
+251,Merenzao
+252,Merille
+253,Merlot
+254,Milgranet
+255,Léon Millot
+256,Molinara
+257,Mondeuse Noire
+258,Mondeuse Grise
+259,Montepulciano
+260,Montù
+261,Moreto
+262,Moristel
+263,Mornen Noir
+264,Morrastel Bouschet
+265,Mourisco Tinto
+266,Mourvèdre
+267,Mouyssaguès
+268,Mtevandidi
+269,Mujuretuli
+270,Muscardin
+271,Muscat Bouschet
+272,Muscat Hamburg
+273,Nebbiolo
+274,Negoska
+275,Negrara
+276,Négrette
+277,Negroamaro
+278,Negru de Dragasani
+279,Nerkarat
+280,Nero Buono di Cori
+281,Nero D'avola
+282,Nerello Mascalese
+283,Nerello Cappuccio
+284,Neretto di Bairo
+285,Neyret
+286,Nielluccio
+287,Ninčuša
+288,Nocera
+289,Notardomenico
+290,Oeillade Noire
+291,Ojaleshi
+292,Öküzgözü
+293,Oseleta
+294,Pallagrello Nero
+295,Pamid
+296,Pascale di Cagliari
+297,Pelaverga
+298,Peloursin
+299,Perdal
+300,Perricone
+301,Persan
+302,Petit Bouschet
+303,Petit Rouge
+304,Petit Verdot
+305,Piccola Nera
+306,Piedirosso
+307,Pignola Valtellinese
+308,Pineau D'aunis
+309,Pinot Meunier
+310,Pinotage
+311,Piquepoul Noir
+312,Plassa
+313,Brajda Mala
+314,Pollera Nera
+315,Poulsard
+316,Prieto Picudo
+317,Prokupac
+318,Raboso
+319,Ramisco
+320,Reberger
+321,Refosco
+322,Rimava
+323,Roesler
+324,Rondinella
+325,Rossese
+326,Rossignola
+327,Rossolino Nero
+328,Rotberger
+329,Rouchet
+330,Rubintos
+331,Ruby Cabernet
+332,Rufete
+333,Sagrantino
+334,Sangiovese
+335,San Giuseppe Nero
+336,Schiava
+337,Schioppettino
+338,Schönburger
+339,Sciacarello
+340,Sciascinoso
+341,Segalin
+342,Servanin
+343,Sgaretta
+344,Syrah
+345,Melnik
+346,Sousão
+347,Svatovavrinecke
+348,Saint-macaire
+349,Sumoll
+350,Susumaniello
+351,Tannat
+352,Tarrango
+353,Tazzelenghe
+354,Tempranillo
+355,Termarina Rossa
+356,Teroldego Rotaliano
+357,Terret Noir
+358,Thiniatiko
+359,Tibouren
+360,Tinta Amarela
+361,Tinta Barroca
+362,Tinta Caiada
+363,Tinta Francisca
+364,Tinta Madeira
+365,Tinta Miuda
+366,Tinta Negra Mole
+367,Tinto Cão
+368,Touriga Franca
+369,Touriga Nacional
+370,Turán
+371,Trepat
+372,Trevisana Nera
+373,Usakhelauri
+374,Uva di Troia
+375,Uvalino
+376,Uva Rara
+377,Uva Tosca
+378,Valdiguié
+379,Valentino Nero
+380,Vermentino Nero
+381,Vespolina
+382,Vien de Nus
+383,Volidza
+384,Vranac
+385,Vuillermin
+386,Wrothham Pinot
+387,Xinomavro
+388,Žametovka
+389,Zinfandel
+390,Zweigeltrebe
+391,Adalmiina
+392,Addoraca
+393,Agh Shani
+394,Aidani
+395,Airén
+396,Alarijen
+397,Albalonga
+398,Albana
+399,Albanella
+400,Albanello Bianco
+401,Albaranzeuli Bianco
+402,Albarello
+403,Albariño
+404,Albarola
+405,Albillo
+406,Alcañón
+407,Aligoté
+408,Alionza
+409,Altesse
+410,Amigne
+411,Ansonica
+412,Antao Vaz
+413,Arany Sárfehér
+414,Arbane
+415,Arbois
+416,Arilla
+417,Arinto
+418,Arneis
+419,Arrufiac
+420,Arvesiniadu
+421,Asprinio Bianco
+422,Assyrtiko
+423,Athiri
+424,Aubin Blanc
+425,Aubin Vert
+426,Aurelius
+427,Auxerrois Blanc
+428,Avesso
+429,Azal Branco
+430,Barcelo
+431,Baco Blanc
+432,Baiyu
+433,Balzac Blanc
+434,Banat Riesling
+435,Baratuciat
+436,Barbera Bianca
+437,Bariadorgia
+438,Belina
+439,Benedino
+440,Besgano Bianco
+441,Bia Blanc
+442,Biancame
+443,Bianchetta Trevigiana
+444,Bianchetti Genovese
+445,Bianco D'alessano
+446,Biancolella
+447,Biancu Gentile
+448,Biancone di Portoferraio
+449,Bical
+450,Bigolona
+451,Blatterle
+452,Bratislavské Biele
+453,Boais
+454,Bogdanuša
+455,Bombino Bianco
+456,Borba Blanca
+457,Bourboulenc
+458,Bouvier
+459,Breidecker
+460,Brustiano Bianco
+461,Budai Zöld
+462,Bukettraube
+463,Monbadon
+464,Caíño Blanco
+465,Camaralet
+466,Canari Blanc
+467,Caprettone
+468,Carica L'asino
+469,Carignan Blanc
+470,Cascarolo Bianco
+471,Catarratto
+472,Cayetana
+473,Chardonnay
+474,Chasan
+475,Chasselas
+476,Chenel
+477,Chenin Blanc
+478,Clairette
+479,Claret de Gers
+480,Claverie
+481,Cococciola
+482,Cocur
+483,Coda di Pecora
+484,Coda di Volpe
+485,Colombard
+486,Completer
+487,Cortese
+488,Crato Bianco
+489,Courbu
+490,Criolla Grande
+491,Crouchen
+492,Pearl Of Csaba
+493,Cserszegi Fűszeres
+494,Cygne Blanc
+495,Dattier
+496,Debina
+497,Diagalves
+498,Dimiat
+499,Dinka
+500,Doña Blanca
+501,Donzelinho Branco
+502,Doradilla
+503,Doradillo
+504,Drupeggio
+505,Durella
+506,Ehrenfelser
+507,Elbling
+508,Emerald Riesling
+509,Emir Karasi
+510,Encruzado
+511,Erbaluce
+512,Esquitxagos
+513,Escanyavella
+514,Ezerjó
+515,Faberrebe
+516,Falanghina
+517,Farana
+518,Fernao Pires
+519,Fetească Albă
+520,Fetească Regală
+521,Fiano di Avellino
+522,Fiét
+523,Findling
+524,Fologosão
+525,Folle Blanche
+526,Forastera
+527,Francavida
+528,Francusa
+529,Freisamer
+530,Fromenteau
+531,Furmint
+532,Galego Dourado
+533,Garganega
+534,Grenache Blanc
+535,Gewürztraminer
+536,Girgentina
+537,Giró Blanc
+538,Godello
+539,Goldburger
+540,Goldriesling
+541,Gouais Blanc
+542,Plant de Graisse
+543,Grasă de Cotnari
+544,Grechetto
+545,Greco Bianco
+546,Green Hungarian
+547,Grenache Gris
+548,Grignolino
+549,Rossese Bianco
+550,Grk Bijeli
+551,Grolleau Gris
+552,Gros Manseng
+553,Grüner Veltliner
+554,Guardavalle
+555,Gutenborner
+556,Hárslevelű
+557,Hondarrabi Zuri
+558,Humagne Blanche
+559,Huxelrebe
+560,Incrocio Manzoni
+561,Irsai Oliver
+562,Jacquère
+563,Jampal
+564,Juhfark
+565,Kanzler
+566,Keknyelu
+567,Kerner
+568,Knipperle
+569,Koshu
+570,Karija L'osü
+571,Krstač
+572,Kujundžuša
+573,Ladikino
+574,Lagarino Bianco
+575,Lagorthi
+576,Lauzet
+577,Len de L'elh
+578,Loureira
+579,Luglienga
+580,Lumassina
+581,Macabeo
+582,Maceratino
+583,Madeleine Angevine
+584,Majarcă Albă
+585,Malagousia
+586,Malvar
+587,Malvasia
+588,Mantonico Bianco
+589,Manteudo
+590,Marsanne
+591,Marzemina Bianca
+592,Mauzac
+593,Melon de Bourgogne
+594,Merlot Blanc
+595,Merseguera
+596,Meslier St-françois
+597,Mezesfehér
+598,Minella Bianca
+599,Miousap
+600,Molette
+601,Montonico Bianco
+602,Montu
+603,Morio-muskat
+604,Moscatel Rosada
+605,Moscato Giallo
+606,Moschofilero
+607,Mtsvane
+608,Müller-thurgau
+609,Muscadelle
+610,Muscat
+611,Moscatell
+612,Muskateller
+613,Muscat Ottonel
+614,Neherleschol
+615,Neuburger
+616,Nobling
+617,Nosiola
+618,Nuragus
+619,Ondenc
+620,Oraniensteiner
+621,Orion
+622,Ortega
+623,Ortrugo
+624,Pagedebit
+625,Pálava
+626,Pallagrello Bianco
+627,Palomino
+628,Pampanuto
+629,Parč
+630,Pardillo
+631,Parellada
+632,Pascal Blanc
+633,Passerina
+634,Pecorello
+635,Pedro Ximénez
+636,Petit Courbu
+637,Petit Manseng
+638,Petit Meslier
+639,Petite Arvine
+640,Picardin
+641,Picolit
+642,Picpoul
+643,Pigato
+644,Pignerol
+645,Pignoletto
+646,Pinella
+647,Pinot Blanc
+648,Pinot Gris
+649,Planta Fina
+650,Planta Nova
+651,Plavai
+652,Pošip
+653,Prensal
+654,Prié Blanc
+655,Prosecco
+656,Prunesta
+657,Rabigato
+658,Rabo de Ovelha
+659,Rauschling
+660,Reichensteiner
+661,Retagliado Bianco
+662,Rèze
+663,Ribolla Gialla
+664,Johannisberg Riesling
+665,Rieslaner
+666,Robola
+667,Roditis
+668,Romorantin
+669,Roter Veltliner
+670,Rotgipfler
+671,Roupeiro
+672,Roussanne
+673,Rovello Bianco
+674,Sacy
+675,Ste Marie
+676,Saint-pierre Doré
+677,Sarfeher
+678,Sauvignon Blanc
+679,Sauvignon Vert
+680,Traminer
+681,Savatiano
+682,Scheurebe
+683,Sémillon
+684,Septiner
+685,Sercial
+686,Sereksia
+687,Sideritis
+688,Siegerrebe
+689,Silvaner
+690,Mátrai Muskotály
+691,Smederevka
+692,Souvignier Gris
+693,Sumoll Blanc
+694,Tamarêz
+695,Tamîioasa
+696,Taminga
+697,Tempranillo Blanco
+698,Téoulier
+699,Terrantez
+700,Terret Gris
+701,Thrapsathiri
+702,Timorasso
+703,Tourbat
+704,Trbljan
+705,Trebbiano
+706,Treixadura
+707,Trousseau Gris
+708,Tsaoussi
+709,Tsolikauri
+710,Verdea
+711,Verdeca
+712,Verdejo
+713,Verdelho
+714,Verdesse
+715,Verdicchio
+716,Verdiso
+717,Verdoncho
+718,Verduzzo
+719,Verduzzo Trevigiano
+720,Vermentino
+721,Vernaccia
+722,Vernaccia di Oristano
+723,Veroga
+724,Versoaln
+725,Vespaiola
+726,Vidiano
+727,Vilana
+728,Vinhao
+729,Viognier
+730,Viosinho
+731,Malvasia Fina do Douro
+732,Vitovska
+733,Voskehat
+734,Vugava
+735,Weldra
+736,Welschriesling
+737,Würzer
+738,Xarel·lo
+739,Xynisteri
+740,Zala Gyöngye
+741,Zalema
+742,Zefir
+743,Zenit
+744,Zengő
+745,Zéta
+746,Zierfandler
+747,Žilavka
+748,Žlahtina
+749,Agdam Gyzyl Uzumu
+750,Chablais Rose
+751,Chardonnay Rose
+752,Gray Riesling Rose
+753,Red Rose
+754,Zinfandel Rose
