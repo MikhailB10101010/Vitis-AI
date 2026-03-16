@@ -36,3 +36,9 @@ Region (ключ)
 | website   | string | Сайт винодельни (если отсутствует — пустая строка)                  |
 | extra     | string | Дополнительные данные, массив чисел преобразован в строку через `;` |
 
+
+## pipeline
+
+- Исходный vineyards.json
+- vineyards_to_csv.py -> vineyards.csv
+- vineyards_enriched.py -> vineyards_enriched.csv

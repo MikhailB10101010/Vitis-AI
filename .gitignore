@@ -8,3 +8,6 @@ test.ipynb
 #docs
 docs/~*
 docs/*.tmp
+
+# kml, много весят
+*.kml
