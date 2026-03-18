@@ -101,17 +101,79 @@ def save_csv(filepath, rows, fieldnames):
             writer.writerow(row)
 
 
+def add_id_column_to_csv(input_filepath, output_filepath):
+    """
+    Создает копию CSV файла с добавленной колонкой id в начале.
+    """
+    rows, fieldnames = load_csv(input_filepath)
+
+    # Добавляем id и переупорядочиваем поля
+    new_fieldnames = ["id"] + fieldnames
+    for idx, row in enumerate(rows, start=1):
+        row["id"] = idx
+
+    with open(output_filepath, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=new_fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def main():
     """Основная функция."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     input_file = os.path.join(script_dir, "vineyards.csv")
     output_file = os.path.join(script_dir, "vineyards_enriched.csv")
+    output_file_with_id = os.path.join(script_dir, "vineyards_enriched_id.csv")
 
-    rows, fieldnames = load_csv(input_file)
-    rows = enrich_data(rows)
-    rows = sort_data(rows)
-    save_csv(output_file, rows, fieldnames)
+    # Флаги для отслеживания, какие файлы нужно создать
+    is_enriched_exist = False
+    create_enriched = True
+    create_with_id = True
+
+    # Проверяем существование vineyards_enriched.csv
+    if os.path.exists(output_file):
+        print(f"\nФайл {os.path.basename(output_file)} уже существует.")
+        is_enriched_exist = True
+        while True:
+            response = input("Хотите пересоздать его? (y/n): ").strip().lower()
+            if response in ['yes', 'y']:
+                print("\t-> Будет пересоздан")
+                create_enriched = True
+                break
+            elif response in ['no', 'n']:
+                print("\t-> Будет пропущен")
+                create_enriched = False
+                break
+            else:
+                print("Пожалуйста, введите 'yes/y' или 'no/n'")
+
+    # Проверяем существование vineyards_enriched_with_id.csv
+    if os.path.exists(output_file_with_id):
+        print(f"\nФайл {os.path.basename(output_file_with_id)} уже существует.")
+        while True:
+            response = input("Хотите пересоздать его? (да/нет): ").strip().lower()
+            if response in ['да', 'yes', 'y', 'д']:
+                print("\t-> Будет пересоздан")
+                create_with_id = True
+                break
+            elif response in ['нет', 'no', 'n', 'н']:
+                print("\t-> Будет пропущен")
+                create_with_id = False
+                break
+            else:
+                print("Пожалуйста, введите 'да' или 'нет'")
+
+    if create_enriched is True:
+        rows, fieldnames = load_csv(input_file)
+        rows = enrich_data(rows)
+        rows = sort_data(rows)
+        save_csv(output_file, rows, fieldnames)
+        is_enriched_exist = True
+
+    # запасной с нумерацией для координации
+    if (is_enriched_exist is True) and (create_with_id is True):
+        add_id_column_to_csv(output_file, output_file_with_id)
 
 
 if __name__ == "__main__":
