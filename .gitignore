@@ -4,6 +4,7 @@
 .idea/*
 .venv/
 test.ipynb
+*/__pycache__
 
 # data 
 data/*/cache/
@@ -19,3 +20,5 @@ docs/*.tmp
 data/vineyard_OSM/src/__pycache__/
 data/vineyard_OSM/data/osm/
 data/vineyard_OSM/cache/
+
+data/OSM_data/source_file/
