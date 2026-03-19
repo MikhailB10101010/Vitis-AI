@@ -1,0 +1,73 @@
+============================================================
+  Извлечение виноградников из OSM PBF
+  Файл DPycharmProjectsVitis-AIdataOSM_datasource_filesouth-america-260318.osm.pbf
+  Размер 3.6 ГБ
+============================================================
+
+[12] Пропуск подсчёта объектов (--skip-count)
+  Оценка по размеру ~600,458,496 объектов
+
+[22] Извлечение виноградников...
+    Обработка   0%                                         653176391 [39090000, 278000.20 objs] , vineyards=22490
+
+  Готово! Найдено виноградников 22,490
+
+============================================================
+  Статистика
+============================================================
+
+  По типу OSM-объекта
+            node 20
+        relation 150
+             way 22,320
+
+  Наличие тегов
+                    name     247 (  1.1%)
+           grape_variety      98 (  0.4%)
+                operator      88 (  0.4%)
+                 species       1 (  0.0%)
+                    crop  10,035 ( 44.6%)
+             description       2 (  0.0%)
+                wikidata       2 (  0.0%)
+                  source     112 (  0.5%)
+                old_name       1 (  0.0%)
+
+  С координатами 22,340  22,490
+
+  Топ-10 сортов винограда
+                        Chardonnay 18
+                        Pinot_noir 16
+                Cabernet_Sauvignon 11
+                            Malbec 11
+                         Carmenere 10
+                             Grape 9
+                            Merlot 4
+                    Cabernet_Franc 3
+                 Torrontés Riojano 2
+    Cabernet_Sauvignon;Merlot;Syrah;Merlot_Noir;Cabernet_franc 1
+
+  Всего уникальных ключей тегов 46
+  Ключи access, addrcity, addrfull, addrhousenumber, addrpostcode, addrstreet, addrstreet_1, addrsuburb, agricultural, amenity, barrier, building, contactemail, contactfacebook, contactinstagram, contactphone, craft, crop, cuisine, description, designation, email, genus, grape_variety, landuse, leaf_cycle, leaf_type, leisure, man_made, name, nameen, natural, office, old_name, operator, operatortype, phone, produce, shop, source, species, type, vine_row_orientation, website, wikidata, wikipedia
+
+============================================================
+  Сохранение результатов
+  Директория DPycharmProjectsVitis-AIdataOSM_dataextracts_osm_pyresults
+  Форматы geojson
+============================================================
+
+  Сохранение GeoJSON DPycharmProjectsVitis-AIdataOSM_dataextracts_osm_pyresultssouth-america-260318.osm.geojson
+    GeoJSON 100%██████████████████████████████ 2249022490
+  Сохранено 33.0 МБ
+
+============================================================
+  Итог
+============================================================
+  Извлечено виноградников 22,490
+  Время извлечения        39 мин 9 сек
+  Общее время             39 мин 12 сек
+  Входной файл            DPycharmProjectsVitis-AIdataOSM_datasource_filesouth-america-260318.osm.pbf
+  Выходные файлы          DPycharmProjectsVitis-AIdataOSM_dataextracts_osm_pyresultssouth-america-260318.osm.
+============================================================
+
+
+Process finished with exit code 0
