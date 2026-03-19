@@ -1,0 +1,21 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+.idea/*
+.venv/
+test.ipynb
+
+# data 
+data/*/cache/
+
+# docs
+docs/~*
+docs/*.tmp
+
+# kml, много весят
+*.kml
+
+# OSM
+data/vineyard_OSM/src/__pycache__/
+data/vineyard_OSM/data/osm/
+data/vineyard_OSM/cache/
