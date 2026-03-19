@@ -288,7 +288,7 @@ def extract_vineyards(filepath: Union[str, Path],
             print("[1/2] Пропуск подсчёта объектов (--skip-count)")
         # Если пропускаем подсчёт, используем оценку по размеру файла
         file_size = get_file_size(filepath)
-        total = int((file_size / (1024 * 1024 * 1024)) * 15_000_000)
+        total = int((file_size / (1024 * 1024 * 1024) * 11) * 15_000_000)
         if verbose:
             print(f"  Оценка по размеру: ~{total:,} объектов")
 
