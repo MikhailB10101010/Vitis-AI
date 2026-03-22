@@ -1,0 +1,75 @@
+D:\PycharmProjects\Vitis-AI\.venv\Scripts\python.exe D:\PycharmProjects\Vitis-AI\data\OSM_data\extracts_osm_py\main.py 
+
+============================================================
+  Извлечение виноградников из OSM PBF
+  Файл: D:\PycharmProjects\Vitis-AI\data\OSM_data\source_file\africa-260321.osm.pbf
+  Размер: 7.1 ГБ
+============================================================
+
+[1/2] Пропуск подсчёта объектов (--skip-count)
+  Оценка по размеру: ~1,172,866,481 объектов
+
+[2/2] Извлечение виноградников...
+    Обработка:   0%|                                        | 1513628372/? [1:38:44<00:00, 255496.95 obj/s] , vineyards=47123
+
+  Готово! Найдено виноградников: 47,123
+
+============================================================
+  Статистика
+============================================================
+
+  По типу OSM-объекта:
+            node: 2
+        relation: 73
+             way: 47,048
+
+  Наличие тегов:
+                    name:      56 (  0.1%)
+           grape_variety:      20 (  0.0%)
+                operator:      74 (  0.2%)
+                 species:      19 (  0.0%)
+                    crop:  44,867 ( 95.2%)
+             description:       1 (  0.0%)
+                  source:     558 (  1.2%)
+                alt_name:       1 (  0.0%)
+              start_date:       1 (  0.0%)
+
+  С координатами: 47,050 / 47,123
+
+  Топ-10 сортов винограда:
+                             Grape: 3
+                      table_grapes: 3
+                             grape: 2
+                             syrah: 1
+                          Thompson: 1
+                 Thompson;Sultanas: 1
+                         colombard: 1
+    Cabernet_Sauvignon;Merlot;Shiraz;Pinot_Noir;Gewurztraminer;colombard;Chardonnay;Sangiovese;Tinta_Barocca;Touriga_Nacional: 1
+             Sauvignon_Blanc;Regal: 1
+                           Merbine: 1
+
+  Всего уникальных ключей тегов: 39
+  Ключи: abandoned, addr:city, addr:province, addr:street, alt_name, area, barrier, brand, contact:email, contact:phone, craft, crop, description, designation, fence_type, fixme, grape_variety, height, historic, landuse, layer, leaf_cycle, leaf_type, man_made, mtb, mtb:name, mtb:type, name, note, official_name, operator, produce, shop, source, species, start_date, tourism, type, website
+
+============================================================
+  Сохранение результатов
+  Директория: D:\PycharmProjects\Vitis-AI\data\OSM_data\extracts_osm_py\results
+  Форматы: geojson
+============================================================
+
+  Сохранение GeoJSON: D:\PycharmProjects\Vitis-AI\data\OSM_data\extracts_osm_py\results\africa-260321.osm.geojson
+    GeoJSON: 100%|██████████████████████████████| 47123/47123
+  Сохранено: 51.9 МБ
+
+============================================================
+  Итог
+============================================================
+  Извлечено виноградников: 47,123
+  Время извлечения:        1 ч 38 мин
+  Общее время:             1 ч 38 мин
+  Входной файл:            D:\PycharmProjects\Vitis-AI\data\OSM_data\source_file\africa-260321.osm.pbf
+  Выходные файлы:          D:\PycharmProjects\Vitis-AI\data\OSM_data\extracts_osm_py\results\africa-260321.osm.*
+============================================================
+
+
+Process finished with exit code 0
