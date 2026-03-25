@@ -80,7 +80,7 @@ def download_file(url, target_dir, check_exists=True):
 
 def main():
     current_path = Path(__file__).resolve().parent
-    download_folder = current_path.parent / "source_file" / "europe_osm_data" # !!! Важно
+    download_folder = current_path.parent / "source_file" / "europe_asia_osm_data" # !!! Важно
     print(f"Папка сохранения файлов{download_folder}")
 
     # base_url = "https://download.geofabrik.de/asia.html"    # !!! Важно

@@ -301,9 +301,9 @@ def extract_vineyards(filepath: Union[str, Path],
         progress = tqdm(
             total=total,
             unit=" obj",
-            desc="  Обработка",
+            desc=" Обработка",
             bar_format=(
-                "  {desc}: {percentage:3.0f}%|{bar:40}| "
+                "  {desc}: {percentage:3.0f}%|{bar:30}| "
                 "{n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}] "
                 "{postfix}"
             ),
