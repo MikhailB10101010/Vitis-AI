@@ -2,6 +2,8 @@ import geopandas as gpd
 import pandas as pd
 from pathlib import Path
 
+from ee.data import setCloudApiKey
+
 
 def merge_geojson_files(
         root_folder,
@@ -17,6 +19,8 @@ def merge_geojson_files(
         Путь к корневой папке, в которой нужно искать .geojson файлы
     output_file : str
         Имя выходного файла
+    select_cols : list
+        Список столбцов которые требуется оставить
     """
 
     # Преобразуем в Path объект
@@ -34,6 +38,7 @@ def merge_geojson_files(
     # Список для хранения всех GeoDataFrame
     gdf_list = []
     all_obj = 0
+    count_error = 0
 
     # Читаем каждый файл
     for file_path in geojson_files:
@@ -42,17 +47,26 @@ def merge_geojson_files(
             gdf = gpd.read_file(file_path)
 
             if select_cols is not None:
-                gdf = gdf[select_cols]
+                # 1. Определяем список колонок, которые НУЖНО удалить
+                # Оставляем только те, что в select_cols И обязательно 'geometry'
+                # keep = set(select_cols) | {'geometry'}
+                if 'geometry' not in select_cols:
+                    select_cols = select_cols + ['geometry']
+                cols_to_drop = [c for c in gdf.columns if c not in select_cols]
+
+                # 2. Удаляем их "на месте" (inplace=True), чтобы не пересоздавать объект
+                gdf.drop(columns=cols_to_drop, inplace=True, errors='ignore')
 
             # Добавляем колонку с именем исходного файла для отслеживания
             gdf['source_file'] = file_path.name
 
             gdf_list.append(gdf)
             all_obj += len(gdf)
-            print(f" - OK\t(объектов: {len(gdf)})")
+            print(f" - OK\t(объектов: {len(gdf)}, колонок: {len(gdf.columns)})")
 
         except Exception as e:
             print(f"Ошибка при загрузке {file_path}: {e}")
+            count_error +=1
 
     if not gdf_list:
         print("Не удалось загрузить ни одного файла.")
@@ -74,11 +88,34 @@ def merge_geojson_files(
         # merged_gdf['geometry'] = merged_gdf['geometry'].buffer(0)
         merged_gdf['geometry'] = merged_gdf.make_valid()
 
+    #
+    if select_cols is not None:
+        # 1. Берем только те колонки из списка, которые существуют в gdf
+        # (сохраняя порядок из select_cols)
+
+        cols_sort = [c for c in select_cols if c in merged_gdf.columns]
+
+        # 3. Перестраиваем таблицу в новом порядке
+        merged_gdf = merged_gdf[cols_sort]
+
+        # 4. Явно подтверждаем, что это GeoDataFrame (на случай потери метаданных)
+        if 'geometry' in merged_gdf.columns:
+            merged_gdf = merged_gdf.set_geometry('geometry')
+
+    # Удаление дубликатов
+    merged_gdf.drop_duplicates(subset=["osm_id"], inplace=True)
+
     # Выводим информацию о результате
     print(f"\nРезультат объединения:")
-    print(f"  - Всего объектов: {len(merged_gdf)} ({all_obj})")
-    print(f"  - Количество колонок: {len(merged_gdf.columns)}")
+    print(f"  - Всего объектов: {len(merged_gdf)} (До удаления дубликатов и прочего: {all_obj})")
+    if select_cols is None:
+        print(f"  - Количество колонок: {len(merged_gdf.columns)}")
+    else:
+        print(f"  - Количество колонок: {len(merged_gdf.columns)} (Подано в функцию: {len(select_cols)})")
     print(f"  - Колонки: {list(merged_gdf.columns)}")
+
+    if count_error != 0:
+        print(f"!!! Ошибок при чтении файлов: {count_error} !!!")
 
     # Сохраняем результат
     try:
@@ -99,8 +136,8 @@ if __name__ == "__main__":
         'osm_id',  # уникальный идентификатор
         'osm_type',  # тип объекта (way/relation)
         'name',  # название
-        'landuse'  # тип землепользования (должен быть vineyard)
-        'geometry',  # геометрия объекта
+        'landuse',  # тип землепользования (должен быть vineyard)
+        'geometry'  # геометрия объекта
     ]
 
     vineyard_specific = [
@@ -131,4 +168,3 @@ if __name__ == "__main__":
         output_file=merged_geo_name,
         select_cols=essential_columns + vineyard_specific
     )
-
