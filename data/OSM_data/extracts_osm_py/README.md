@@ -33,4 +33,6 @@ OSM_data/
 
 В папке `results` оставлены пару .geojson в качестве примера, оставшаяся часть весит 1,2 Гб. В архиве 104 Мб
 
-Я.Диск: https://disk.yandex.ru/d/BUimS476W7Vd2g
+Я.Диск: https://disk.yandex.ru/d/f4sNeFLjRL4sOQ
+
+# Я.Диск: https://disk.yandex.ru/d/BUimS476W7Vd2g
