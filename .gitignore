@@ -26,5 +26,8 @@ data/OSM_data/source_file/**
 data/OSM_data/extracts_osm_py/results/**
 data/OSM_data/extracts_osm_py/results_combine/*.geojson
 
+# natural earth vector
+data/natural_earth_vector/*
+
 #
 !**/README.md
