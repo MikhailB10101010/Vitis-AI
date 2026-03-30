@@ -2,8 +2,6 @@ import geopandas as gpd
 import pandas as pd
 from pathlib import Path
 
-from ee.data import setCloudApiKey
-
 
 def merge_geojson_files(
         root_folder,
@@ -104,6 +102,12 @@ def merge_geojson_files(
 
     # Удаление дубликатов
     merged_gdf.drop_duplicates(subset=["osm_id"], inplace=True)
+
+    # Удаление пустых geometry
+    merged_gdf.dropna(subset=['geometry'], inplace=True)
+
+    # Удаление "osm_type": "node"
+    merged_gdf.drop(merged_gdf[merged_gdf['osm_type'] == 'node'].index, inplace=True)
 
     # Выводим информацию о результате
     print(f"\nРезультат объединения:")
