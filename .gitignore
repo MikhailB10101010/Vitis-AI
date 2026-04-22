@@ -1,21 +1,30 @@
-# Default ignored files
-/shelf/
-/workspace.xml
-.idea/*
-.venv/
-test.ipynb
+```
+# Dependencies
+node_modules/
 
-# data 
-data/*/cache/
+# Environment variables
+.env
+.env.local
+.env.*
 
-# docs
-docs/~*
-docs/*.tmp
+# Build artifacts
+*.pyc
+__pycache__/
+streamlit_app/__pycache__/
 
-# kml, много весят
-*.kml
+# Logs
+*.log
 
-# OSM
-data/vineyard_OSM/src/__pycache__/
-data/vineyard_OSM/data/osm/
-data/vineyard_OSM/cache/
+# Temporary files
+*.tmp
+*.swp
+
+# Package lock files
+package-lock.json
+
+# Python dependencies
+*.egg-info/
+dist/
+build/
+
+```
