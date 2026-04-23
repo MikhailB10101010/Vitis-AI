@@ -5,7 +5,7 @@
  * Функционал:
  * - REST API для оценки участков
  * - Аутентификация и авторизация (JWT)
- * - Интеграция с MongoDB для хранения GeoJSON данных
+ * - Интеграция с SQLite для хранения GeoJSON данных
  * - Кэширование запросов к внешним API
  */
 
@@ -15,7 +15,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
-const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +29,9 @@ const userRoutes = require('./routes/users');
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
 const { authenticateToken } = require('./middleware/auth');
+
+// Initialize database
+const { getDb } = require('./utils/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -69,17 +73,28 @@ if (process.env.NODE_ENV === 'development') {
 // Database Connection
 // ============================================
 
-const connectDB = async () => {
+const initializeDatabase = () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vitis-ai');
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'data/vitis_ai.db');
     
-    // Create indexes for geospatial queries
-    const Evaluation = require('./models/Evaluation');
-    await Evaluation.createIndexes();
-    console.log('✅ Database indexes created');
+    // Ensure data directory exists
+    const dataDir = path.dirname(dbPath);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+      console.log(`📁 Created data directory: ${dataDir}`);
+    }
+    
+    // Initialize database connection and create tables if needed
+    const db = getDb();
+    console.log(`✅ SQLite Database Connected: ${dbPath}`);
+    
+    // Test the connection
+    db.db.prepare('SELECT 1').get();
+    console.log('✅ Database connection verified');
+    
+    return db;
   } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error.message);
+    console.error('❌ Database Connection Error:', error.message);
     process.exit(1);
   }
 };
@@ -143,10 +158,10 @@ app.use(errorHandler);
 // Server Start
 // ============================================
 
-const startServer = async () => {
+const startServer = () => {
   try {
-    // Connect to database
-    await connectDB();
+    // Initialize database
+    initializeDatabase();
     
     // Start server
     app.listen(PORT, () => {
@@ -165,7 +180,6 @@ const startServer = async () => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled Rejection:', err);
-  server.close(() => process.exit(1));
 });
 
 // Handle SIGTERM

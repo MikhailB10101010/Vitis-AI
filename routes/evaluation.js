@@ -11,6 +11,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const Evaluation = require('../models/Evaluation');
+const User = require('../models/User');
 
 // ============================================
 // Validation Rules
@@ -284,8 +285,8 @@ router.post('/', evaluateValidation, async (req, res, next) => {
     };
 
     // Create evaluation record
-    const evaluation = new Evaluation({
-      user: userId,
+    const evaluationData = {
+      userId,
       location: {
         type: polygon ? 'Polygon' : 'Point',
         coordinates: polygon || [longitude, latitude]
@@ -296,25 +297,25 @@ router.post('/', evaluateValidation, async (req, res, next) => {
         suitability_score: suitabilityScore,
         model_version: '1.0.0'
       },
-      shap_values: shapValues,
-      top_factors: topFactors,
+      shapValues: shapValues,
+      topFactors: topFactors,
       risks,
       recommendations,
-      processing_time_ms: Date.now() - startTime,
+      processingTimeMs: Date.now() - startTime,
       cached: false,
-      cache_expiry: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours TTL
-    });
+      cacheExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours TTL
+    };
+
+    const evaluation = await Evaluation.create(evaluationData);
 
     // Categorize score
     evaluation.categorizeScore();
 
-    // Save to database
-    await evaluation.save();
-
     // Update user's evaluation count
-    await req.user.updateOne({ 
-      $inc: { evaluationCount: 1 } 
-    });
+    await User.findById(userId).then(u => u && u.save ? null : null); // No-op for now, increment is done in DB wrapper
+    
+    const db = require('../utils/database').getDb();
+    db.incrementEvaluationCount(userId);
 
     const processingTime = Date.now() - startTime;
 
@@ -336,10 +337,7 @@ router.post('/', evaluateValidation, async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const evaluation = await Evaluation.findOne({
-      _id: req.params.id,
-      user: req.user._id
-    });
+    const evaluation = await Evaluation.findByUserAndId(req.user.id, req.params.id);
 
     if (!evaluation) {
       return res.status(404).json({
@@ -363,14 +361,7 @@ router.get('/:id', async (req, res, next) => {
  */
 router.get('/geojson', async (req, res, next) => {
   try {
-    const evaluations = await Evaluation.find({
-      user: req.user._id
-    }).limit(100);
-
-    const geojson = {
-      type: 'FeatureCollection',
-      features: evaluations.map(e => e.toGeoJSON())
-    };
+    const geojson = await Evaluation.getAsGeoJSON(req.user.id, 100);
 
     res.json({
       success: true,

@@ -1,5 +1,5 @@
 /**
- * User Model
+ * User Model (SQLite version)
  * Модель пользователя для системы аутентификации
  * 
  * Роли:
@@ -7,124 +7,66 @@
  * - admin: администратор (+ управление моделями и данными)
  */
 
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const { getDb } = require('../utils/database');
 
-const userSchema = new mongoose.Schema({
-  // Basic information
-  username: {
-    type: String,
-    required: [true, 'Username is required'],
-    unique: true,
-    trim: true,
-    minlength: [3, 'Username must be at least 3 characters'],
-    maxlength: [50, 'Username cannot exceed 50 characters']
-  },
-  
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
-  },
-  
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false // Don't return password by default
-  },
-  
-  // Role-based access control
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
-  
-  // Profile information
-  fullName: {
-    type: String,
-    trim: true,
-    maxlength: [100, 'Full name cannot exceed 100 characters']
-  },
-  
-  organization: {
-    type: String,
-    trim: true
-  },
-  
-  // Account status
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  
-  isVerified: {
-    type: Boolean,
-    default: false
-  },
-  
-  // Timestamps
-  lastLogin: {
-    type: Date
-  },
-  
-  // Evaluation history reference
-  evaluationCount: {
-    type: Number,
-    default: 0
+class User {
+  constructor(userData) {
+    if (userData) {
+      this.id = userData.id || userData._id;
+      this.username = userData.username;
+      this.email = userData.email;
+      this.password = userData.password;
+      this.role = userData.role || 'user';
+      this.fullName = userData.full_name || userData.fullName;
+      this.organization = userData.organization;
+      this.isActive = userData.is_active !== undefined ? userData.is_active : (userData.isActive !== undefined ? userData.isActive : true);
+      this.isVerified = userData.is_verified !== undefined ? userData.is_verified : (userData.isVerified !== undefined ? userData.isVerified : false);
+      this.lastLogin = userData.last_login || userData.lastLogin;
+      this.evaluationCount = userData.evaluation_count !== undefined ? userData.evaluation_count : (userData.evaluationCount || 0);
+      this.createdAt = userData.created_at || userData.createdAt;
+      this.updatedAt = userData.updated_at || userData.updatedAt;
+    }
   }
-}, {
-  timestamps: true // Adds createdAt and updatedAt
-});
 
-// Index for geospatial queries and common lookups
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-userSchema.index({ role: 1 });
-
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  // Only hash if password is modified
-  if (!this.isModified('password')) {
-    return next();
+  static async create(userData) {
+    const db = getDb();
+    return await db.createUser(userData);
   }
-  
-  try {
-    const salt = await bcrypt.genSalt(process.env.BCRYPT_ROUNDS || 10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+
+  static async findByEmail(email) {
+    const db = getDb();
+    return await db.getUserByEmail(email);
   }
-});
 
-// Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    throw new Error('Error comparing passwords');
+  static async findById(id) {
+    const db = getDb();
+    return await db.getUserById(id);
   }
-};
 
-// Method to update last login
-userSchema.methods.updateLastLogin = async function() {
-  this.lastLogin = new Date();
-  await this.save();
-};
+  async comparePassword(candidatePassword) {
+    const db = getDb();
+    return await db.comparePassword(this, candidatePassword);
+  }
 
-// Convert to JSON (exclude sensitive fields)
-userSchema.methods.toJSON = function() {
-  const user = this.toObject();
-  delete user.password;
-  delete user.__v;
-  return user;
-};
+  async updateLastLogin() {
+    const db = getDb();
+    await db.stmts.updateUserLastLogin.run(this.id);
+    this.lastLogin = new Date().toISOString();
+  }
 
-const User = mongoose.model('User', userSchema);
+  async save() {
+    const db = getDb();
+    await db.updateUserProfile(this.id, {
+      fullName: this.fullName,
+      organization: this.organization
+    });
+    this.updatedAt = new Date().toISOString();
+  }
+
+  toJSON() {
+    const { password, ...userWithoutPassword } = this;
+    return userWithoutPassword;
+  }
+}
 
 module.exports = User;

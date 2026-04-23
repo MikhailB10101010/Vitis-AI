@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "init-db": "node utils/init-db.js"
   },
   "keywords": [
     "vitis",
@@ -22,7 +23,7 @@
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "express-validator": "^7.0.1",
-    "mongoose": "^8.0.3",
+    "better-sqlite3": "^9.2.2",
     "helmet": "^7.1.0",
     "morgan": "^1.10.0",
     "express-rate-limit": "^7.1.5"

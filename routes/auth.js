@@ -65,21 +65,16 @@ router.post('/register', registerValidation, async (req, res) => {
     const { username, email, password, fullName, organization } = req.body;
 
     // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { username }] 
-    });
-
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       return res.status(409).json({
         success: false,
-        message: existingUser.email === email 
-          ? 'Email already registered' 
-          : 'Username already taken'
+        message: 'Email already registered'
       });
     }
 
     // Create new user
-    const user = new User({
+    const user = await User.create({
       username,
       email,
       password,
@@ -87,11 +82,9 @@ router.post('/register', registerValidation, async (req, res) => {
       organization
     });
 
-    await user.save();
-
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '24h' }
     );
@@ -101,17 +94,21 @@ router.post('/register', registerValidation, async (req, res) => {
       message: 'Registration successful',
       data: {
         user: {
-          id: user._id,
+          id: user.id,
           username: user.username,
           email: user.email,
           role: user.role,
-          fullName: user.fullName
+          fullName: user.full_name
         },
         token
       }
     });
   } catch (error) {
-    next(error);
+    console.error('Registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Registration failed'
+    });
   }
 });
 
@@ -133,8 +130,8 @@ router.post('/login', loginValidation, async (req, res, next) => {
 
     const { email, password } = req.body;
 
-    // Find user by email (include password for comparison)
-    const user = await User.findOne({ email }).select('+password');
+    // Find user by email
+    const user = await User.findByEmail(email);
 
     if (!user) {
       return res.status(401).json({
@@ -166,7 +163,7 @@ router.post('/login', loginValidation, async (req, res, next) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, role: user.role },
+      { userId: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '24h' }
     );
@@ -176,7 +173,7 @@ router.post('/login', loginValidation, async (req, res, next) => {
       message: 'Login successful',
       data: {
         user: {
-          id: user._id,
+          id: user.id,
           username: user.username,
           email: user.email,
           role: user.role,
@@ -212,7 +209,7 @@ router.get('/me', async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Find user
-    const user = await User.findById(decoded.userId).select('-password');
+    const user = await User.findById(decoded.userId);
     
     if (!user) {
       return res.status(404).json({
@@ -223,7 +220,7 @@ router.get('/me', async (req, res, next) => {
 
     res.json({
       success: true,
-      data: user
+      data: user.toJSON()
     });
   } catch (error) {
     next(error);
