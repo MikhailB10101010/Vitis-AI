@@ -5,7 +5,7 @@
  * Функционал:
  * - REST API для оценки участков
  * - Аутентификация и авторизация (JWT)
- * - Интеграция с MongoDB для хранения GeoJSON данных
+ * - Интеграция с SQLite для хранения данных
  * - Кэширование запросов к внешним API
  */
 
@@ -15,7 +15,9 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
-const mongoose = require('mongoose');
+const path = require('path');
+const { getDb, getUserModel } = require('./models/User');
+const { getEvaluationModel } = require('./models/Evaluation');
 
 // Load environment variables
 dotenv.config();
@@ -66,20 +68,20 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // ============================================
-// Database Connection
+// Database Connection (SQLite)
 // ============================================
 
-const connectDB = async () => {
+const initDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vitis-ai');
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    // Initialize database and create tables
+    const db = getDb();
+    const user = getUserModel();
+    const evaluation = getEvaluationModel();
     
-    // Create indexes for geospatial queries
-    const Evaluation = require('./models/Evaluation');
-    await Evaluation.createIndexes();
-    console.log('✅ Database indexes created');
+    console.log('✅ SQLite Database initialized');
+    console.log(`📁 Database path: ${process.env.SQLITE_DB_PATH || path.join(__dirname, 'data', 'vitis.db')}`);
   } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error.message);
+    console.error('❌ SQLite Initialization Error:', error.message);
     process.exit(1);
   }
 };
@@ -145,34 +147,31 @@ app.use(errorHandler);
 
 const startServer = async () => {
   try {
-    // Connect to database
-    await connectDB();
+    // Initialize database
+    await initDB();
     
     // Start server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`\n🚀 Vitis-AI Backend Server started`);
       console.log(`📍 Port: ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 API URL: http://localhost:${PORT}`);
       console.log(`📊 Health Check: http://localhost:${PORT}/health\n`);
     });
+    
+    // Handle graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('👋 SIGTERM received. Shutting down gracefully...');
+      server.close(() => {
+        console.log('✅ Server closed');
+        process.exit(0);
+      });
+    });
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
 };
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled Rejection:', err);
-  server.close(() => process.exit(1));
-});
-
-// Handle SIGTERM
-process.on('SIGTERM', () => {
-  console.log('👋 SIGTERM received. Shutting down gracefully...');
-  process.exit(0);
-});
 
 startServer();
 

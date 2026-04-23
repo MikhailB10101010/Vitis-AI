@@ -1,11 +1,13 @@
 /**
  * User Routes
- * История оценок, профиль пользователя
+ * История оценок, профиль пользователя (SQLite)
  */
 
 const express = require('express');
 const router = express.Router();
 const Evaluation = require('../models/Evaluation');
+const User = require('../models/User');
+const { getDb } = require('../models/User');
 
 /**
  * GET /api/user/history
@@ -15,19 +17,10 @@ router.get('/history', async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    const evaluations = await Evaluation.find({
-      user: req.user._id
-    })
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .select('-shap_values'); // Exclude detailed SHAP values for list view
-
-    const total = await Evaluation.countDocuments({
-      user: req.user._id
-    });
+    const evaluations = Evaluation.findByUserId(req.user.id, limit, offset);
+    const total = Evaluation.countByUserId(req.user.id);
 
     res.json({
       success: true,
@@ -52,7 +45,7 @@ router.get('/history', async (req, res, next) => {
  */
 router.get('/profile', async (req, res, next) => {
   try {
-    const user = await req.user.constructor.findById(req.user._id);
+    const user = User.findById(req.user.id);
     
     res.json({
       success: true,
@@ -70,16 +63,24 @@ router.get('/profile', async (req, res, next) => {
 router.put('/profile', async (req, res, next) => {
   try {
     const { fullName, organization } = req.body;
+    const db = getDb();
     
-    if (fullName) req.user.fullName = fullName;
-    if (organization) req.user.organization = organization;
+    const stmt = db.prepare(`
+      UPDATE users 
+      SET full_name = COALESCE(?, full_name), 
+          organization = COALESCE(?, organization),
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `);
     
-    await req.user.save();
+    stmt.run(fullName || null, organization || null, req.user.id);
+    
+    const updatedUser = User.findById(req.user.id);
     
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      data: req.user
+      data: updatedUser
     });
   } catch (error) {
     next(error);
@@ -92,10 +93,12 @@ router.put('/profile', async (req, res, next) => {
  */
 router.delete('/evaluation/:id', async (req, res, next) => {
   try {
-    const evaluation = await Evaluation.findOneAndDelete({
-      _id: req.params.id,
-      user: req.user._id
-    });
+    const db = getDb();
+    
+    // Check if evaluation exists and belongs to user
+    const evaluation = db.prepare(
+      'SELECT id FROM evaluations WHERE id = ? AND user_id = ?'
+    ).get(parseInt(req.params.id), req.user.id);
 
     if (!evaluation) {
       return res.status(404).json({
@@ -104,10 +107,13 @@ router.delete('/evaluation/:id', async (req, res, next) => {
       });
     }
 
+    // Delete evaluation
+    db.prepare('DELETE FROM evaluations WHERE id = ?').run(evaluation.id);
+
     // Decrement evaluation count
-    await req.user.updateOne({
-      $inc: { evaluationCount: -1 }
-    });
+    db.prepare(
+      'UPDATE users SET evaluation_count = MAX(0, evaluation_count - 1) WHERE id = ?'
+    ).run(req.user.id);
 
     res.json({
       success: true,

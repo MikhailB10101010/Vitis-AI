@@ -1,6 +1,6 @@
 /**
  * Authentication Middleware
- * Проверка JWT токена для защиты маршрутов
+ * Проверка JWT токена для защиты маршрутов (SQLite)
  */
 
 const jwt = require('jsonwebtoken');
@@ -27,7 +27,7 @@ const authenticateToken = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Find user
-    const user = await User.findById(decoded.userId).select('-password');
+    const user = User.findById(decoded.userId);
     
     if (!user) {
       return res.status(401).json({
@@ -104,7 +104,7 @@ const optionalAuth = async (req, res, next) => {
 
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.userId).select('-password');
+      const user = User.findById(decoded.userId);
       
       if (user && user.isActive) {
         req.user = user;

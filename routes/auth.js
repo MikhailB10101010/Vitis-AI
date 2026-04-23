@@ -64,30 +64,14 @@ router.post('/register', registerValidation, async (req, res) => {
 
     const { username, email, password, fullName, organization } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { username }] 
-    });
-
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: existingUser.email === email 
-          ? 'Email already registered' 
-          : 'Username already taken'
-      });
-    }
-
-    // Create new user
-    const user = new User({
+    // Create new user (this will check for existing users internally)
+    const user = await User.create({
       username,
       email,
       password,
       fullName,
       organization
     });
-
-    await user.save();
 
     // Generate JWT token
     const token = jwt.sign(
@@ -101,7 +85,7 @@ router.post('/register', registerValidation, async (req, res) => {
       message: 'Registration successful',
       data: {
         user: {
-          id: user._id,
+          id: user.id,
           username: user.username,
           email: user.email,
           role: user.role,
@@ -111,7 +95,12 @@ router.post('/register', registerValidation, async (req, res) => {
       }
     });
   } catch (error) {
-    next(error);
+    console.error('Registration error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Registration failed',
+      error: error.message
+    });
   }
 });
 

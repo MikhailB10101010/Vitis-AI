@@ -207,8 +207,8 @@ router.post('/', evaluateValidation, async (req, res, next) => {
     const userId = req.user._id;
 
     // Check cache first (TTL 24 hours per FR-023)
-    const cached = await Evaluation.findCached(longitude, latitude);
-    if (cached && !cached.isCacheExpired()) {
+    const cached = Evaluation.findCached(latitude, longitude);
+    if (cached) {
       return res.json({
         success: true,
         message: 'Result from cache',
@@ -284,8 +284,8 @@ router.post('/', evaluateValidation, async (req, res, next) => {
     };
 
     // Create evaluation record
-    const evaluation = new Evaluation({
-      user: userId,
+    const evaluationData = {
+      userId,
       location: {
         type: polygon ? 'Polygon' : 'Point',
         coordinates: polygon || [longitude, latitude]
@@ -294,27 +294,29 @@ router.post('/', evaluateValidation, async (req, res, next) => {
       features,
       prediction: {
         suitability_score: suitabilityScore,
+        category: suitabilityScore >= 70 ? 'high' : suitabilityScore >= 40 ? 'medium' : 'low',
+        confidence: 'medium',
         model_version: '1.0.0'
       },
-      shap_values: shapValues,
-      top_factors: topFactors,
+      shapValues,
+      topFactors,
       risks,
       recommendations,
-      processing_time_ms: Date.now() - startTime,
+      processingTimeMs: Date.now() - startTime,
       cached: false,
-      cache_expiry: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours TTL
-    });
+      cacheExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours TTL
+    };
 
-    // Categorize score
-    evaluation.categorizeScore();
+    const evaluation = await Evaluation.create(evaluationData);
 
-    // Save to database
-    await evaluation.save();
-
-    // Update user's evaluation count
-    await req.user.updateOne({ 
-      $inc: { evaluationCount: 1 } 
-    });
+    // Update user's evaluation count (optional, not critical)
+    try {
+      const User = require('../models/User');
+      const db = require('../models/User').getDb();
+      db.prepare('UPDATE users SET evaluation_count = evaluation_count + 1 WHERE id = ?').run(userId);
+    } catch (e) {
+      // Ignore errors in updating count
+    }
 
     const processingTime = Date.now() - startTime;
 
@@ -336,12 +338,9 @@ router.post('/', evaluateValidation, async (req, res, next) => {
  */
 router.get('/:id', async (req, res, next) => {
   try {
-    const evaluation = await Evaluation.findOne({
-      _id: req.params.id,
-      user: req.user._id
-    });
+    const evaluation = Evaluation.findById(parseInt(req.params.id));
 
-    if (!evaluation) {
+    if (!evaluation || evaluation.user !== req.user.id) {
       return res.status(404).json({
         success: false,
         message: 'Evaluation not found'
@@ -363,13 +362,21 @@ router.get('/:id', async (req, res, next) => {
  */
 router.get('/geojson', async (req, res, next) => {
   try {
-    const evaluations = await Evaluation.find({
-      user: req.user._id
-    }).limit(100);
+    const evaluations = Evaluation.findByUserId(req.user.id, 100);
 
     const geojson = {
       type: 'FeatureCollection',
-      features: evaluations.map(e => e.toGeoJSON())
+      features: evaluations.map(e => ({
+        type: 'Feature',
+        geometry: e.location,
+        properties: {
+          id: e.id,
+          suitability_score: e.prediction.suitability_score,
+          category: e.prediction.category,
+          region: e.region,
+          created_at: e.createdAt
+        }
+      }))
     };
 
     res.json({
