@@ -1,130 +1,166 @@
 /**
  * User Model
- * Модель пользователя для системы аутентификации
+ * Модель пользователя для системы аутентификации (SQLite)
  * 
  * Роли:
  * - user: базовый пользователь (оценка участков, отчеты)
  * - admin: администратор (+ управление моделями и данными)
  */
 
-const mongoose = require('mongoose');
+const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
+const path = require('path');
 
-const userSchema = new mongoose.Schema({
-  // Basic information
-  username: {
-    type: String,
-    required: [true, 'Username is required'],
-    unique: true,
-    trim: true,
-    minlength: [3, 'Username must be at least 3 characters'],
-    maxlength: [50, 'Username cannot exceed 50 characters']
-  },
-  
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
-  },
-  
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false // Don't return password by default
-  },
-  
-  // Role-based access control
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user'
-  },
-  
-  // Profile information
-  fullName: {
-    type: String,
-    trim: true,
-    maxlength: [100, 'Full name cannot exceed 100 characters']
-  },
-  
-  organization: {
-    type: String,
-    trim: true
-  },
-  
-  // Account status
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  
-  isVerified: {
-    type: Boolean,
-    default: false
-  },
-  
-  // Timestamps
-  lastLogin: {
-    type: Date
-  },
-  
-  // Evaluation history reference
-  evaluationCount: {
-    type: Number,
-    default: 0
+const dbPath = process.env.SQLITE_DB_PATH || path.join(__dirname, '..', 'data', 'vitis.db');
+
+class User {
+  constructor(db) {
+    this.db = db;
+    this.initTable();
   }
-}, {
-  timestamps: true // Adds createdAt and updatedAt
-});
 
-// Index for geospatial queries and common lookups
-userSchema.index({ email: 1 });
-userSchema.index({ username: 1 });
-userSchema.index({ role: 1 });
-
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  // Only hash if password is modified
-  if (!this.isModified('password')) {
-    return next();
+  initTable() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT DEFAULT 'user' CHECK(role IN ('user', 'admin')),
+        full_name TEXT,
+        organization TEXT,
+        is_active INTEGER DEFAULT 1,
+        is_verified INTEGER DEFAULT 0,
+        last_login DATETIME,
+        evaluation_count INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Create indexes
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)');
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)');
   }
-  
-  try {
-    const salt = await bcrypt.genSalt(process.env.BCRYPT_ROUNDS || 10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+
+  async create(userData) {
+    const { username, email, password, fullName, organization, role = 'user' } = userData;
+    
+    // Check if user exists
+    const existing = this.db.prepare(
+      'SELECT id FROM users WHERE email = ? OR username = ?'
+    ).get(email.toLowerCase().trim(), username.trim());
+    
+    if (existing) {
+      const existingUser = this.db.prepare(
+        'SELECT email, username FROM users WHERE id = ?'
+      ).get(existing.id);
+      
+      if (existingUser.email === email.toLowerCase().trim()) {
+        throw new Error('Email already registered');
+      } else {
+        throw new Error('Username already taken');
+      }
+    }
+
+    // Hash password
+    const salt = bcrypt.genSaltSync(process.env.BCRYPT_ROUNDS || 10);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+
+    const stmt = this.db.prepare(`
+      INSERT INTO users (username, email, password, role, full_name, organization, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, 1)
+    `);
+
+    const result = stmt.run(
+      username.trim(),
+      email.toLowerCase().trim(),
+      hashedPassword,
+      role,
+      fullName?.trim() || null,
+      organization?.trim() || null
+    );
+
+    return this.findById(result.lastInsertRowid);
   }
-});
 
-// Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    throw new Error('Error comparing passwords');
+  findById(id) {
+    const user = this.db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+    if (!user) return null;
+    
+    return {
+      _id: user.id,
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      fullName: user.full_name,
+      organization: user.organization,
+      isActive: user.is_active === 1,
+      isVerified: user.is_verified === 1,
+      lastLogin: user.last_login,
+      evaluationCount: user.evaluation_count,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at
+    };
   }
-};
 
-// Method to update last login
-userSchema.methods.updateLastLogin = async function() {
-  this.lastLogin = new Date();
-  await this.save();
-};
+  findByEmail(email) {
+    const user = this.db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase().trim());
+    if (!user) return null;
+    
+    return {
+      _id: user.id,
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      password: user.password,
+      role: user.role,
+      fullName: user.full_name,
+      organization: user.organization,
+      isActive: user.is_active === 1,
+      isVerified: user.is_verified === 1,
+      lastLogin: user.last_login,
+      evaluationCount: user.evaluation_count,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at,
+      comparePassword: async (candidatePassword) => {
+        return bcrypt.compareSync(candidatePassword, user.password);
+      },
+      updateLastLogin: async () => {
+        const stmt = this.db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?');
+        stmt.run(user.id);
+      }
+    };
+  }
 
-// Convert to JSON (exclude sensitive fields)
-userSchema.methods.toJSON = function() {
-  const user = this.toObject();
-  delete user.password;
-  delete user.__v;
-  return user;
-};
+  toJSON(user) {
+    if (!user) return null;
+    const { password, ...rest } = user;
+    return rest;
+  }
+}
 
-const User = mongoose.model('User', userSchema);
+// Singleton instance
+let dbInstance = null;
+let userModelInstance = null;
 
-module.exports = User;
+function getDb() {
+  if (!dbInstance) {
+    dbInstance = new Database(dbPath);
+    dbInstance.pragma('journal_mode = WAL');
+  }
+  return dbInstance;
+}
+
+function getUserModel() {
+  if (!userModelInstance) {
+    userModelInstance = new User(getDb());
+  }
+  return userModelInstance;
+}
+
+module.exports = getUserModel();
+module.exports.getUserModel = getUserModel;
+module.exports.getDb = getDb;
