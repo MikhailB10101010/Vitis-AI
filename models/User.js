@@ -29,33 +29,35 @@ class User {
   }
 
   static async create(userData) {
-    const db = getDb();
+    const db = await getDb();
     return await db.createUser(userData);
   }
 
   static async findByEmail(email) {
-    const db = getDb();
+    const db = await getDb();
     return await db.getUserByEmail(email);
   }
 
   static async findById(id) {
-    const db = getDb();
+    const db = await getDb();
     return await db.getUserById(id);
   }
 
   async comparePassword(candidatePassword) {
-    const db = getDb();
+    const db = await getDb();
     return await db.comparePassword(this, candidatePassword);
   }
 
   async updateLastLogin() {
-    const db = getDb();
-    await db.stmts.updateUserLastLogin.run(this.id);
+    const db = await getDb();
+    // Update last login in database - we need to add this method to database wrapper
+    await db.db.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [this.id]);
+    db.save();
     this.lastLogin = new Date().toISOString();
   }
 
   async save() {
-    const db = getDb();
+    const db = await getDb();
     await db.updateUserProfile(this.id, {
       fullName: this.fullName,
       organization: this.organization

@@ -35,42 +35,42 @@ class Evaluation {
   }
 
   static async create(evaluationData) {
-    const db = getDb();
+    const db = await getDb();
     return await db.createEvaluation(evaluationData);
   }
 
   static async findById(id) {
-    const db = getDb();
+    const db = await getDb();
     return db.getEvaluationById(id);
   }
 
   static async findByUserAndId(userId, id) {
-    const db = getDb();
+    const db = await getDb();
     return db.getEvaluationByUserAndId(userId, id);
   }
 
   static async findByUser(userId, page = 1, limit = 20) {
-    const db = getDb();
+    const db = await getDb();
     return db.getEvaluationsByUser(userId, page, limit);
   }
 
   static async countByUser(userId) {
-    const db = getDb();
+    const db = await getDb();
     return db.countEvaluationsByUser(userId);
   }
 
   static async deleteByUserAndId(userId, id) {
-    const db = getDb();
+    const db = await getDb();
     return db.deleteEvaluation(userId, id);
   }
 
   static async findCached(longitude, latitude) {
-    const db = getDb();
+    const db = await getDb();
     return await db.findCachedEvaluation(longitude, latitude);
   }
 
   static async getAsGeoJSON(userId, limit = 100) {
-    const db = getDb();
+    const db = await getDb();
     return db.getEvaluationsAsGeoJSON(userId, limit);
   }
 

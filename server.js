@@ -73,7 +73,7 @@ if (process.env.NODE_ENV === 'development') {
 // Database Connection
 // ============================================
 
-const initializeDatabase = () => {
+const initializeDatabase = async () => {
   try {
     const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'data/vitis_ai.db');
     
@@ -85,7 +85,7 @@ const initializeDatabase = () => {
     }
     
     // Initialize database connection and create tables if needed
-    const db = getDb();
+    const db = await getDb();
     console.log(`✅ SQLite Database Connected: ${dbPath}`);
     
     // Test the connection
@@ -158,10 +158,10 @@ app.use(errorHandler);
 // Server Start
 // ============================================
 
-const startServer = () => {
+const startServer = async () => {
   try {
     // Initialize database
-    initializeDatabase();
+    await initializeDatabase();
     
     // Start server
     app.listen(PORT, () => {

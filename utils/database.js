@@ -1,82 +1,45 @@
 /**
- * Database wrapper for SQLite (better-sqlite3)
+ * Database wrapper for SQLite (sql.js)
  * Provides methods similar to Mongoose models
  */
 
-const Database = require('better-sqlite3');
+const initSqlJs = require('sql.js');
 const path = require('path');
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data/vitis_ai.db');
 
 class DatabaseWrapper {
   constructor() {
-    this.db = new Database(DB_PATH);
-    this.db.pragma('foreign_keys = ON');
-    
-    // Prepare statements for better performance
-    this.prepareStatements();
+    this.SQL = null;
+    this.db = null;
+    this.initialized = false;
   }
 
-  prepareStatements() {
-    // User statements
-    this.stmts = {
-      // Users
-      getUserById: this.db.prepare('SELECT * FROM users WHERE id = ?'),
-      getUserByEmail: this.db.prepare('SELECT * FROM users WHERE email = ?'),
-      getUserByUsername: this.db.prepare('SELECT * FROM users WHERE username = ?'),
-      createUser: this.db.prepare(`
-        INSERT INTO users (username, email, password, full_name, organization, role)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `),
-      updateUser: this.db.prepare(`
-        UPDATE users SET full_name = ?, organization = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-      `),
-      updateUserLastLogin: this.db.prepare(`
-        UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?
-      `),
-      incrementEvaluationCount: this.db.prepare(`
-        UPDATE users SET evaluation_count = evaluation_count + 1 WHERE id = ?
-      `),
-      decrementEvaluationCount: this.db.prepare(`
-        UPDATE users SET evaluation_count = MAX(0, evaluation_count - 1) WHERE id = ?
-      `),
-      
-      // Evaluations
-      createEvaluation: this.db.prepare(`
-        INSERT INTO evaluations (
-          user_id, location_type, location_coords, region,
-          climate_avg_temp_year, climate_avg_temp_growing_season, climate_min_temp_winter,
-          climate_max_temp_summer, climate_growing_degree_days, climate_rainfall_year,
-          climate_rainfall_summer, climate_humidity_avg, climate_sunshine_hours,
-          climate_frost_days, climate_huglin_index, climate_cool_night_index,
-          relief_elevation, relief_slope, relief_aspect, relief_tpi, relief_insolation,
-          relief_distance_to_sea,
-          soil_soil_type, soil_soil_ph, soil_organic_matter, soil_soil_drainage, soil_soil_texture,
-          satellite_ndvi, satellite_ndwi, satellite_cloud_coverage,
-          geo_latitude, geo_longitude, geo_distance_to_river,
-          suitability_score, category, confidence, model_version,
-          shap_values, top_factors, risks, recommendations,
-          processing_time_ms, cached, cache_expiry
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `),
-      getEvaluationById: this.db.prepare('SELECT * FROM evaluations WHERE id = ?'),
-      getEvaluationByUserAndId: this.db.prepare('SELECT * FROM evaluations WHERE id = ? AND user_id = ?'),
-      getEvaluationsByUser: this.db.prepare(`
-        SELECT * FROM evaluations WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?
-      `),
-      countEvaluationsByUser: this.db.prepare('SELECT COUNT(*) as count FROM evaluations WHERE user_id = ?'),
-      deleteEvaluation: this.db.prepare('DELETE FROM evaluations WHERE id = ? AND user_id = ?'),
-      findCachedEvaluation: this.db.prepare(`
-        SELECT * FROM evaluations 
-        WHERE geo_latitude = ? AND geo_longitude = ? AND cached = 1 AND cache_expiry > datetime('now')
-        LIMIT 1
-      `),
-      getEvaluationsAsGeoJSON: this.db.prepare(`
-        SELECT id, location_type, location_coords, suitability_score, category, region, created_at
-        FROM evaluations WHERE user_id = ? LIMIT ?
-      `)
-    };
+  async initialize() {
+    if (this.initialized) return;
+    
+    this.SQL = await initSqlJs();
+    
+    // Load existing database or create new one
+    if (fs.existsSync(DB_PATH)) {
+      const fileBuffer = fs.readFileSync(DB_PATH);
+      this.db = new this.SQL.Database(fileBuffer);
+    } else {
+      this.db = new this.SQL.Database();
+    }
+    
+    // Enable foreign keys
+    this.db.run('PRAGMA foreign_keys = ON');
+    this.initialized = true;
+  }
+
+  save() {
+    if (!this.db) return;
+    const data = this.db.export();
+    const buffer = Buffer.from(data);
+    fs.writeFileSync(DB_PATH, buffer);
   }
 
   // ============================================
@@ -84,16 +47,18 @@ class DatabaseWrapper {
   // ============================================
 
   async createUser(userData) {
+    await this.initialize();
+    
     try {
       const { username, email, password, fullName, organization, role = 'user' } = userData;
       
       // Check if user exists
-      const existingEmail = this.stmts.getUserByEmail.get(email);
+      const existingEmail = this.db.prepare('SELECT * FROM users WHERE email = ?').get(email);
       if (existingEmail) {
         throw new Error('Email already registered');
       }
       
-      const existingUsername = this.stmts.getUserByUsername.get(username);
+      const existingUsername = this.db.prepare('SELECT * FROM users WHERE username = ?').get(username);
       if (existingUsername) {
         throw new Error('Username already taken');
       }
@@ -102,10 +67,17 @@ class DatabaseWrapper {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
       
-      const result = this.stmts.createUser.run(username, email, hashedPassword, fullName || null, organization || null, role);
+      this.db.run(
+        `INSERT INTO users (username, email, password, full_name, organization, role) VALUES (?, ?, ?, ?, ?, ?)`,
+        [username, email, hashedPassword, fullName || null, organization || null, role]
+      );
+      
+      this.save();
+      
+      const result = this.db.prepare('SELECT last_insert_rowid() as id').get();
       
       return {
-        id: result.lastInsertRowid,
+        id: result.id,
         username,
         email,
         full_name: fullName,
@@ -120,7 +92,9 @@ class DatabaseWrapper {
   }
 
   async getUserByEmail(email) {
-    const user = this.stmts.getUserByEmail.get(email);
+    await this.initialize();
+    
+    const user = this.db.prepare('SELECT * FROM users WHERE email = ?').get(email);
     if (!user) return null;
     
     return {
@@ -134,7 +108,9 @@ class DatabaseWrapper {
   }
 
   async getUserById(id) {
-    const user = this.stmts.getUserById.get(id);
+    await this.initialize();
+    
+    const user = this.db.prepare('SELECT * FROM users WHERE id = ?').get(id);
     if (!user) return null;
     
     return {
@@ -145,33 +121,46 @@ class DatabaseWrapper {
         return userWithoutPassword;
       },
       updateLastLogin: async () => {
-        this.stmts.updateUserLastLogin.run(id);
+        this.db.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+        this.save();
       },
       save: async () => {
-        this.stmts.updateUser.run(user.full_name, user.organization, id);
+        this.db.run('UPDATE users SET full_name = ?, organization = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+          [user.full_name, user.organization, id]);
+        this.save();
       }
     };
   }
 
   async comparePassword(user, candidatePassword) {
-    const userData = this.stmts.getUserById.get(user.id);
+    await this.initialize();
+    
+    const userData = this.db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
     if (!userData) return false;
     
     return await bcrypt.compare(candidatePassword, userData.password);
   }
 
   async updateUserProfile(userId, updates) {
+    await this.initialize();
+    
     const { fullName, organization } = updates;
-    this.stmts.updateUser.run(fullName, organization, userId);
+    this.db.run('UPDATE users SET full_name = ?, organization = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+      [fullName, organization, userId]);
+    this.save();
     return this.getUserById(userId);
   }
 
   async incrementEvaluationCount(userId) {
-    this.stmts.incrementEvaluationCount.run(userId);
+    await this.initialize();
+    this.db.run('UPDATE users SET evaluation_count = evaluation_count + 1 WHERE id = ?', [userId]);
+    this.save();
   }
 
   async decrementEvaluationCount(userId) {
-    this.stmts.decrementEvaluationCount.run(userId);
+    await this.initialize();
+    this.db.run('UPDATE users SET evaluation_count = MAX(0, evaluation_count - 1) WHERE id = ?', [userId]);
+    this.save();
   }
 
   // ============================================
@@ -179,6 +168,8 @@ class DatabaseWrapper {
   // ============================================
 
   async createEvaluation(evaluationData) {
+    await this.initialize();
+    
     const {
       userId,
       location,
@@ -196,7 +187,23 @@ class DatabaseWrapper {
 
     const coords = JSON.stringify(location.coordinates);
     
-    const result = this.stmts.createEvaluation.run(
+    this.db.run(`
+      INSERT INTO evaluations (
+        user_id, location_type, location_coords, region,
+        climate_avg_temp_year, climate_avg_temp_growing_season, climate_min_temp_winter,
+        climate_max_temp_summer, climate_growing_degree_days, climate_rainfall_year,
+        climate_rainfall_summer, climate_humidity_avg, climate_sunshine_hours,
+        climate_frost_days, climate_huglin_index, climate_cool_night_index,
+        relief_elevation, relief_slope, relief_aspect, relief_tpi, relief_insolation,
+        relief_distance_to_sea,
+        soil_soil_type, soil_soil_ph, soil_organic_matter, soil_soil_drainage, soil_soil_texture,
+        satellite_ndvi, satellite_ndwi, satellite_cloud_coverage,
+        geo_latitude, geo_longitude, geo_distance_to_river,
+        suitability_score, category, confidence, model_version,
+        shap_values, top_factors, risks, recommendations,
+        processing_time_ms, cached, cache_expiry
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
       userId,
       location.type,
       coords,
@@ -256,51 +263,79 @@ class DatabaseWrapper {
       processingTimeMs,
       cached ? 1 : 0,
       cacheExpiry ? new Date(cacheExpiry).toISOString() : null
-    );
+    ]);
+    
+    this.save();
 
-    return this.getEvaluationById(result.lastInsertRowid);
+    const result = this.db.prepare('SELECT last_insert_rowid() as id').get();
+    return this.getEvaluationById(result.id);
   }
 
-  getEvaluationById(id) {
-    const evaluation = this.stmts.getEvaluationById.get(id);
+  async getEvaluationById(id) {
+    await this.initialize();
+    
+    const evaluation = this.db.prepare('SELECT * FROM evaluations WHERE id = ?').get(id);
     if (!evaluation) return null;
     
     return this._transformEvaluation(evaluation);
   }
 
-  getEvaluationByUserAndId(userId, id) {
-    const evaluation = this.stmts.getEvaluationByUserAndId.get(id, userId);
+  async getEvaluationByUserAndId(userId, id) {
+    await this.initialize();
+    
+    const evaluation = this.db.prepare('SELECT * FROM evaluations WHERE id = ? AND user_id = ?').get(id, userId);
     if (!evaluation) return null;
     
     return this._transformEvaluation(evaluation);
   }
 
-  getEvaluationsByUser(userId, page = 1, limit = 20) {
+  async getEvaluationsByUser(userId, page = 1, limit = 20) {
+    await this.initialize();
+    
     const offset = (page - 1) * limit;
-    const evaluations = this.stmts.getEvaluationsByUser.all(userId, limit, offset);
+    const evaluations = this.db.prepare(
+      'SELECT * FROM evaluations WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    ).all(userId, limit, offset);
     
     return evaluations.map(e => this._transformEvaluation(e, true));
   }
 
   countEvaluationsByUser(userId) {
-    const result = this.stmts.countEvaluationsByUser.get(userId);
+    if (!this.db) return 0;
+    const result = this.db.prepare('SELECT COUNT(*) as count FROM evaluations WHERE user_id = ?').get(userId);
     return result.count;
   }
 
-  deleteEvaluation(userId, id) {
-    const result = this.stmts.deleteEvaluation.run(id, userId);
-    return result.changes > 0;
+  async deleteEvaluation(userId, id) {
+    await this.initialize();
+    
+    const stmt = this.db.prepare('DELETE FROM evaluations WHERE id = ? AND user_id = ?');
+    stmt.run(id, userId);
+    this.save();
+    return stmt.getChanges() > 0;
   }
 
   async findCachedEvaluation(longitude, latitude) {
-    const cachedEval = this.stmts.findCachedEvaluation.get(latitude, longitude);
+    await this.initialize();
+    
+    const cachedEval = this.db.prepare(`
+      SELECT * FROM evaluations 
+      WHERE geo_latitude = ? AND geo_longitude = ? AND cached = 1 AND cache_expiry > datetime('now')
+      LIMIT 1
+    `).get(latitude, longitude);
+    
     if (!cachedEval) return null;
     
     return this._transformEvaluation(cachedEval);
   }
 
-  getEvaluationsAsGeoJSON(userId, limit = 100) {
-    const evaluations = this.stmts.getEvaluationsAsGeoJSON.all(userId, limit);
+  async getEvaluationsAsGeoJSON(userId, limit = 100) {
+    await this.initialize();
+    
+    const evaluations = this.db.prepare(`
+      SELECT id, location_type, location_coords, suitability_score, category, region, created_at
+      FROM evaluations WHERE user_id = ? LIMIT ?
+    `).all(userId, limit);
     
     return {
       type: 'FeatureCollection',
@@ -413,16 +448,20 @@ class DatabaseWrapper {
   }
 
   close() {
-    this.db.close();
+    if (this.db) {
+      this.save();
+      this.db.close();
+    }
   }
 }
 
 // Singleton instance
 let dbInstance = null;
 
-function getDb() {
+async function getDb() {
   if (!dbInstance) {
     dbInstance = new DatabaseWrapper();
+    await dbInstance.initialize();
   }
   return dbInstance;
 }
