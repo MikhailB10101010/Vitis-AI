@@ -119,6 +119,14 @@ def merge_geojson_files(
     )
     merged_gdf.reset_index(drop=True, inplace=True)
 
+    # Сохраняем результат
+    try:
+        merged_gdf.to_file(output_file, driver='GeoJSON')
+        print(f"\nФайл успешно сохранён: {output_file}")
+        print(f"Размер файла: {Path(output_file).stat().st_size / 1024 / 1024:.2f} MB")
+    except Exception as e:
+        print(f"\nОшибка при сохранении: {e}")
+
     # Выводим информацию о результате
     print(f"\nРезультат объединения:")
     print(f"  - Всего объектов: {len(merged_gdf)} (До удаления дубликатов и прочего: {all_obj})")
@@ -130,14 +138,6 @@ def merge_geojson_files(
 
     if count_error != 0:
         print(f"!!! Ошибок при чтении файлов: {count_error} !!!")
-
-    # Сохраняем результат
-    try:
-        merged_gdf.to_file(output_file, driver='GeoJSON')
-        print(f"\nФайл успешно сохранён: {output_file}")
-        print(f"Размер файла: {Path(output_file).stat().st_size / 1024 / 1024:.2f} MB")
-    except Exception as e:
-        print(f"\nОшибка при сохранении: {e}")
 
 
 def remove_spatial_duplicates_advanced(
@@ -157,6 +157,7 @@ def remove_spatial_duplicates_advanced(
     gdf = gdf.copy()
 
     # --- CRS обязательно в метрах ---
+    original_crs = gdf.crs
     if gdf.crs.is_geographic:
         gdf = gdf.to_crs(epsg=3857)
 
@@ -228,6 +229,7 @@ def remove_spatial_duplicates_advanced(
 
     gdf = gdf.drop(index=list(to_drop))
     gdf = gdf.drop(columns=["area", "centroid"])
+    gdf = gdf.to_crs(original_crs)
 
     return gdf
 
