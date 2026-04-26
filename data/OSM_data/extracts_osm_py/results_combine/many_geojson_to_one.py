@@ -1,6 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 from pathlib import Path
+from tqdm import tqdm
 
 
 def merge_geojson_files(
@@ -109,6 +110,15 @@ def merge_geojson_files(
     # Удаление "osm_type": "node"
     merged_gdf.drop(merged_gdf[merged_gdf['osm_type'] == 'node'].index, inplace=True)
 
+    # Фильтр поиск огрызков
+    merged_gdf.reset_index(drop=True, inplace=True)
+    merged_gdf = remove_spatial_duplicates_advanced(
+        merged_gdf,
+        distance_threshold=2000,
+        overlap_threshold=0.7
+    )
+    merged_gdf.reset_index(drop=True, inplace=True)
+
     # Выводим информацию о результате
     print(f"\nРезультат объединения:")
     print(f"  - Всего объектов: {len(merged_gdf)} (До удаления дубликатов и прочего: {all_obj})")
@@ -130,6 +140,98 @@ def merge_geojson_files(
         print(f"\nОшибка при сохранении: {e}")
 
 
+def remove_spatial_duplicates_advanced(
+        gdf,
+        distance_threshold=2000,   # метры
+        overlap_threshold=0.7
+):
+    """
+    Удаление spatial-дубликатов:
+    1. Фильтр по расстоянию центроидов
+    2. Проверка вложенности
+    3. Проверка пересечения (overlap)
+    """
+
+    print("\nУдаление spatial-дубликатов (advanced)...")
+
+    gdf = gdf.copy()
+
+    # --- CRS обязательно в метрах ---
+    if gdf.crs.is_geographic:
+        gdf = gdf.to_crs(epsg=3857)
+
+    # Предрасчеты
+    gdf["area"] = gdf.geometry.area
+    gdf["centroid"] = gdf.geometry.centroid
+
+    sindex = gdf.sindex
+    to_drop = set()
+
+    for idx, row in tqdm(gdf.iterrows(), total=len(gdf), desc="Обработка объектов"):
+        if idx in to_drop:
+            continue
+
+        geom = row.geometry
+        centroid = row.centroid
+
+        # bbox кандидаты
+        possible_idx = list(sindex.intersection(geom.bounds))
+
+        for other_idx in possible_idx:
+            if other_idx == idx or other_idx in to_drop:
+                continue
+
+            other = gdf.loc[other_idx]
+
+            # --- 1. ФИЛЬТР ПО РАССТОЯНИЮ ---
+            dist = centroid.distance(other.centroid)
+            if dist > distance_threshold:
+                continue
+
+            other_geom = other.geometry
+
+            # --- 2. ПРОВЕРКА ВЛОЖЕННОСТИ ---
+            if geom.contains(other.centroid):
+                # другой внутри текущего
+                to_drop.add(other_idx)
+                continue
+
+            if other_geom.contains(centroid):
+                to_drop.add(idx)
+                break
+
+            # --- 3. ПРОВЕРКА ПЕРЕСЕЧЕНИЯ ---
+            if not geom.intersects(other_geom):
+                continue
+
+            intersection = geom.intersection(other_geom)
+
+            if intersection.is_empty:
+                continue
+
+            inter_area = intersection.area
+            min_area = min(row.area, other.area)
+
+            if min_area == 0:
+                continue
+
+            overlap_ratio = inter_area / min_area
+
+            if overlap_ratio > overlap_threshold:
+                if row.area >= other.area:
+                    to_drop.add(other_idx)
+                else:
+                    to_drop.add(idx)
+                    break
+
+    print(f"Удалено объектов: {len(to_drop)}")
+
+    gdf = gdf.drop(index=list(to_drop))
+    gdf = gdf.drop(columns=["area", "centroid"])
+
+    return gdf
+
+
 if __name__ == "__main__":
     #
     current_path = Path(__file__).resolve().parent
@@ -146,25 +248,25 @@ if __name__ == "__main__":
 
     vineyard_specific = [
         'grape_variety',  # сорт винограда
-        'vine_row_orientation',  # ориентация рядов
-        'vine_row_direction',  # направление рядов
+        #'vine_row_orientation',  # ориентация рядов
+        #'vine_row_direction',  # направление рядов
         'crop',  # культура
         'produce',  # производимая продукция
-        'plantation',  # плантация/насаждение
-        'vineyard:class',  # класс виноградника
-        'vineyard:locality',  # местность/апелласьон
-        'vineyard:soil',  # тип почвы
-        'vineyard:village',  # деревня/село
-        'vineyard:type',  # тип виноградника
-        'vineyard:description:it',  # описание (итальянские регионы)
+        #'plantation',  # плантация/насаждение
+        #'vineyard:class',  # класс виноградника
+        #'vineyard:locality',  # местность/апелласьон
+        #'vineyard:soil',  # тип почвы
+        #'vineyard:village',  # деревня/село
+        #'vineyard:type',  # тип виноградника
+        #'vineyard:description:it',  # описание (итальянские регионы)
         'wine:label',  # винная этикетка/бренд
         'wine:region',  # винный регион
-        'harvest_year_start',  # год начала сбора
-        'harvest_first_year',  # первый год сбора
-        'organic',  # органическое земледелие
-        'irrigation',  # орошение
-        'irrigation:water_supply',  # источник воды для орошения
-        'terraced'  # террасирование
+        #'harvest_year_start',  # год начала сбора
+        #'harvest_first_year',  # первый год сбора
+        #'organic',  # органическое земледелие
+        #'irrigation',  # орошение
+        #'irrigation:water_supply',  # источник воды для орошения
+        #'terraced'  # террасирование
     ]
 
     merge_geojson_files(
