@@ -29,5 +29,12 @@ data/OSM_data/extracts_osm_py/results_combine/*.geojson
 # natural earth vector
 data/natural_earth_vector/*
 
+# add properties to geojson (continent, contry)
+data/OSM_data/add_properties_to_geojson/*.geojson
+
+# add vinetype
+data/OSM_data/find_varieties_v1/*.csv
+data/OSM_data/find_varieties_v1/*.rar
+
 #
 !**/README.md
