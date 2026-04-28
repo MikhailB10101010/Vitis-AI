@@ -1,0 +1,42 @@
+import sqlite3
+from pathlib import Path
+
+# Путь к БД
+db_folder_path = Path(__file__).resolve().parent.parent / "data"
+db_name = 'vineyard_1.db'
+db_path = db_folder_path / db_name
+
+try:
+    # Подключение к БД
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Создание таблицы
+    # conn.execute("PRAGMA foreign_keys = ON")    # На будующее
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS vineyard_features (
+        osm_id INTEGER PRIMARY KEY,   -- Уникальный ID из OpenStreetMap
+        lat REAL NOT NULL,      -- Широта
+        lon REAL NOT NULL,      -- Долгота
+        
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP          -- Время последнего обновления записи
+    
+        elevation REAL,                         -- Высота над уровнем моря
+        elevation_status TEXT DEFAULT 'pending',-- Статус обработки высоты
+    
+        slope REAL,                             -- Уклон (крутизна)
+        slope_status TEXT DEFAULT 'pending',    -- Статус обработки уклона
+    
+        aspect REAL,                            -- Экспозиция (куда смотрит склон)
+        aspect_status TEXT DEFAULT 'pending',   -- Статус обработки экспозиции
+    );
+    ''')
+
+    # Сохранение изменений и закрытие БД
+    conn.commit()
+    conn.close()
+
+    print("База данных и таблица успешно созданы!")
+except sqlite3.Error as e:
+        print(f"Ошибка при работе с SQLite: {e}")

@@ -1,4 +1,5 @@
 #
+.env
 
 # Default ignored files
 /shelf/
@@ -10,6 +11,7 @@ test.ipynb
 
 # data 
 data/*/cache/
+*.db
 
 # docs
 docs/~*
