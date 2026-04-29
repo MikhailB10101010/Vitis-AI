@@ -1,3 +1,11 @@
+## db
+### Файлы
+
+- [schema.py](db/schema.py) - Создание таблицы
+- [repository.py](db/repository.py) - загрузка в БД массива из (osm_id, lat, lon)
+- [init_db.py](db/init_db.py) - Для инициализации БД, вызывает выше указанные функции/
+
+
 ## services
 
 ### `terrain_GEE_USGS.py`

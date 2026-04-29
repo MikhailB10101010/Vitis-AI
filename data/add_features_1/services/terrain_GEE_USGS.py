@@ -10,7 +10,7 @@ def terrain_GEE_USGS(
 ):
     """
     Получает данные рельефа (высота, уклон, экспозиция) из датасета USGS/SRTMGL1_003.
-    'elevation', 'slope', 'aspect'.
+    'elevation', 'slope', 'aspect', 'hillshade':.
 
     Args:
         input_data: Либо ee.FeatureCollection, либо широта (lat) если lon указан.
@@ -18,7 +18,8 @@ def terrain_GEE_USGS(
         scale=30.
 
     Returns:
-        pass.
+        Если одну точку, то на выходе будет что-то dict - {'aspect': 0, 'elevation': 260, 'hillshade': 180, 'slope': 1}.
+        Если подается колекция фич (батч), то json каша
     """
     try:
         # 1 - Базовый слой (SRTM + алгоритм Terrain)
@@ -43,7 +44,7 @@ def terrain_GEE_USGS(
                 raise ValueError("Для одиночной точки необходимо указать и lat, и lon")
             
             if verbose:
-                print(f'Начало обработки точки:\t{lat}\t{lon}', end='')
+                print(f'Начало обработки точки:\t{lat}, {lon}', end='')
 
             # Не круто, что везде все по размному, футы метры и т.д
             point = ee.Geometry.Point([lon, lat])
