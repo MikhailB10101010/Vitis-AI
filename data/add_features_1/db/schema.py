@@ -12,25 +12,25 @@ try:
     cursor = conn.cursor()
 
     # Создание таблицы
-    # conn.execute("PRAGMA foreign_keys = ON")    # На будующее
+    # conn.execute("PRAGMA foreign_keys = ON")    # На будущее
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS vineyard_features (
-        osm_id INTEGER PRIMARY KEY,   -- Уникальный ID из OpenStreetMap
-        lat REAL NOT NULL,      -- Широта
-        lon REAL NOT NULL,      -- Долгота
-        
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP          -- Время последнего обновления записи
-    
-        elevation REAL,                         -- Высота над уровнем моря
-        elevation_status TEXT DEFAULT 'pending',-- Статус обработки высоты
-    
-        slope REAL,                             -- Уклон (крутизна)
-        slope_status TEXT DEFAULT 'pending',    -- Статус обработки уклона
-    
-        aspect REAL,                            -- Экспозиция (куда смотрит склон)
-        aspect_status TEXT DEFAULT 'pending',   -- Статус обработки экспозиции
-    );
+        CREATE TABLE IF NOT EXISTS vineyard_features (
+            osm_id INTEGER PRIMARY KEY,   -- Уникальный ID из OpenStreetMap
+            lat REAL NOT NULL,      -- Широта
+            lon REAL NOT NULL,      -- Долгота
+
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP,          -- Время последнего обновления записи
+
+            elevation_GEE_USGS_30m REAL,                         -- Высота над уровнем моря
+            elevation_GEE_USGS_30m_status TEXT DEFAULT 'pending',-- Статус обработки высоты
+
+            slope_GEE_USGS_30m REAL,                             -- Уклон (крутизна)
+            slope_GEE_USGS_30m_status TEXT DEFAULT 'pending',    -- Статус обработки уклона
+
+            aspect_GEE_USGS_30m REAL,                            -- Экспозиция (куда смотрит склон)
+            aspect_GEE_USGS_30m_status TEXT DEFAULT 'pending'   -- Статус обработки экспозиции
+        );
     ''')
 
     # Сохранение изменений и закрытие БД
@@ -39,4 +39,4 @@ try:
 
     print("База данных и таблица успешно созданы!")
 except sqlite3.Error as e:
-        print(f"Ошибка при работе с SQLite: {e}")
+    print(f"Ошибка при работе с SQLite: {e}")

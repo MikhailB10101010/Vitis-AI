@@ -38,5 +38,9 @@ data/OSM_data/add_properties_to_geojson/*.geojson
 data/OSM_data/find_varieties_v1/*.csv
 data/OSM_data/find_varieties_v1/*.rar
 
+# ПОЧИСТИТЬ
+data/OSM_data/add_properties_to_geojson/add_geo_location_features_3.py
+data/OSM_data/add_properties_to_geojson/add_geo_location_features_backup.py
+
 #
 !**/README.md
