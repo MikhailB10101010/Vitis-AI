@@ -1,8 +1,11 @@
 # repository.py - Загрузка в БД данных
 import sqlite3
+from datetime import datetime
+from pathlib import Path
 
 
 def insert_points(points, db_path):
+    """Функця для заполнения полей osm_id, lat, lon."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -13,3 +16,249 @@ def insert_points(points, db_path):
 
     conn.commit()
     conn.close()
+
+
+def get_row_by_status(db_path, cols_filter, status='pending', AND_or_OR="AND", limit=1000):
+    """
+    Функция для получения osm_id, lat, lon если "cols_filter" в статусе {status}.
+
+    Args:
+        db_path: Путь к БД.
+        cols_filter: Колонки которые надо првоерить, на вход либо str, либо list[str, str, ...].
+        limit=1000: Лимит вывода значений.
+
+    Returns:
+        list[osm_id, lat, lon].
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    if isinstance(cols_filter, str):
+        cols_filter = [cols_filter]
+    else:
+        cols_filter = list(dict.fromkeys(cols_filter))
+
+    for i in range(len(cols_filter)):
+        if not cols_filter[i].endswith('_status'):
+            cols_filter[i] = cols_filter[i] + '_status'
+
+    conditions = f" {AND_or_OR} ".join([f"{col} = '{status}'" for col in cols_filter])
+
+    query = f"""
+        SELECT osm_id, lat, lon
+        FROM vineyard_features
+        WHERE {conditions}
+        LIMIT ?
+    """
+
+    try:
+        cursor.execute(query, (limit,))
+        rows = cursor.fetchall()
+    finally:
+        conn.close()
+
+    return rows
+
+
+def update_vineyard_features(
+    db_path: str,
+    id_in_db: int,
+    features: dict,
+    status: str = 'done'
+) -> bool:
+    """
+    Функция для обновления данных.
+
+    Args:
+        db_path: Путь к БД.
+        id_in_db: Колонки которые надо првоерить, на вход либо str, либо list[str, str, ...].
+        features: Лимит вывода значений.
+        status: str = 'done': Какой статус будет выставляется.
+
+    Returns:
+        list[osm_id, lat, lon].
+    """
+    if not features:
+        return False
+
+    set_clauses = []
+    params = []
+
+    for column, value in features.items():
+        set_clauses.append(f"{column} = ?")
+        set_clauses.append(f"{column}_status = ?")
+        params.extend([value, status])
+
+    # Добавляем метку времени обновления
+    set_clauses.append("updated_at = ?")
+    params.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))  # CURRENT_TIMESTAMP
+
+    # Добавляем ID в параметры для WHERE
+    params.append(id_in_db)
+
+    query = f"""
+        UPDATE vineyard_features SET {', '.join(set_clauses)}
+        WHERE osm_id = ?
+    """
+
+    try:
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, params)
+            conn.commit()
+            return True
+    except sqlite3.Error as e:
+        print(f"Ошибка при обновлении базы данных: {e}")
+        return False
+        # Здесь можно реализовать логику записи ошибки в лог или смены статуса на 'error'
+
+
+def reset_row_dynamically(db_path, osm_id) -> bool:
+    """
+    Автоматически находит все столбцы в таблице и обнуляет их,
+    учитывая их тип (NULL для данных, 'pending' для статусов).
+    """
+    try:
+        with sqlite3.connect(db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # Информация о столбцах таблицы
+            table_name = "vineyard_features"
+            cursor.execute(f"PRAGMA table_info('{table_name}')")
+            columns = cursor.fetchall()
+
+            set_parts = []
+            # Технические поля, которые НЕ трогаем
+            exclude = ['osm_id', 'lat', 'lon', 'created_at']
+
+            for col in columns:
+                col_name = col['name']
+
+                if col_name in exclude:
+                    continue
+
+                # 2. Логика сброса:
+                if col_name == 'updated_at':
+                    set_parts.append(f"{col_name} = CURRENT_TIMESTAMP")
+                elif col_name.endswith('_status'):
+                    set_parts.append(f"{col_name} = 'pending'")
+                else:
+                    set_parts.append(f"{col_name} = NULL")
+
+            if not set_parts:
+                return False
+
+            # 3. Собираем и выполняем запрос
+            sql = f"UPDATE vineyard_features SET {', '.join(set_parts)} WHERE osm_id = ?"
+            cursor.execute(sql, (osm_id,))
+            conn.commit()
+            print(f"Запись {osm_id} динамически обновлена.")
+        return True
+
+    except sqlite3.Error as e:
+        print(f"Ошибка: {e}")
+        return False
+
+
+def create_feature_cols(db_path, col_name):
+    """
+    Создание колонки для параметра и статуса 'panding'.
+    Если колонка с признаком есть, а со статусом нету, то она её создаст
+
+    Args:
+        db_path: Путь к БД.
+        col_name: str или list[str, str, ...].
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    if isinstance(col_name, str):
+        columns = [col_name]
+    else:
+        columns = col_name
+
+    for col in columns:
+        try:
+            # 1. Создаем основную колонку для данных (например, REAL для координат/высот)
+            # Если данные могут быть разными, можно использовать BLOB или оставить тип гибким
+            cursor.execute(f"ALTER TABLE vineyard_features ADD COLUMN {col} REAL")
+            print(f"Колонка '{col}' успешно добавлена.")
+        except sqlite3.OperationalError:
+            print(f"Колонка '{col}' уже существует.")
+
+        try:
+            # 2. Создаем колонку статуса со значением 'pending' по умолчанию
+            status_col = f"{col}_status"
+            cursor.execute(f"ALTER TABLE vineyard_features ADD COLUMN {status_col} TEXT DEFAULT 'pending'")
+            print(f"Колонка '{status_col}' успешно добавлена.")
+        except sqlite3.OperationalError:
+            print(f"Колонка '{status_col}' уже существует.")
+
+    conn.commit()
+    conn.close()
+
+
+def delete_feature_cols(db_path, col_name):
+    """
+    Удаляет колонку параметра и колонку его статуса.
+
+    Args:
+        db_path: Путь к БД.
+        col_name: str или list[str] с названиями признаков.
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Приводим к списку
+    columns = [col_name] if isinstance(col_name, str) else col_name
+
+    for col in columns:
+        # Список колонок для удаления (сама переменная + её статус)
+        cols_to_remove = [col, f"{col}_status"]
+
+        for target in cols_to_remove:
+            try:
+                # В SQLite нельзя удалить несколько колонок одним запросом
+                # и нельзя использовать параметры (?) для имен колонок
+                cursor.execute(f'ALTER TABLE vineyard_features DROP COLUMN "{target}"')
+                print(f"Колонка '{target}' успешно удалена.")
+            except sqlite3.OperationalError as e:
+                # Если колонки нет, SQLite выдаст ошибку — перехватываем её
+                print(f"Ошибка при удалении '{target}': {e}")
+
+    conn.commit()
+    conn.close()
+
+
+if __name__ == "__main__":
+    # Путь к БД
+    print(sqlite3.sqlite_version)
+    db_folder_path = Path(__file__).resolve().parent.parent / "data"
+    db_folder_path.mkdir(exist_ok=True)
+    db_name = 'vineyard_1.db'
+    db_path = db_folder_path / db_name
+
+    # # TEST get_pending
+    ans = get_row_by_status(
+        db_path,
+        "elevation_GEE_USGS_30m_",  # ["elevation_GEE_USGS_30m_status", "slope_GEE_USGS_30m_status"],
+        limit=5
+    )
+    for i in ans:
+        print(i)
+
+    # TEST create_feature_cols
+    # create_feature_cols(db_path, "test")
+
+    # TSET delete_feature_cols
+    # delete_feature_cols(db_path, "test")
+
+    # TEST update_vineyard_features
+    # id = 4812832
+    # data = {'aspect_GEE_USGS_30m': 0, 'elevation_GEE_USGS_30m': 260, 'hillshade_GEE_USGS_30m': 180, 'slope_GEE_USGS_30m': 1}
+    # update_vineyard_features(db_path, id, data)
+
+    # TEST reset_row_dynamically
+    # id = 4812832
+    # reset_row_dynamically(db_path, id)
