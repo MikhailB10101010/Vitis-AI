@@ -2,13 +2,24 @@
 ### Файлы
 
 - [schema.py](db/schema.py) - Создание таблицы
-- [repository.py](db/repository.py) - загрузка в БД массива из (osm_id, lat, lon)
+- [repository.py](db/repository.py) - загрузка/выгрузка в/из БД массива
 - [init_db.py](db/init_db.py) - Для инициализации БД, вызывает выше указанные функции/
 
+#### [schema.py](db/schema.py)
+Только создание файла БД, и основных колонок
+
+#### [repository.py](db/repository.py)
+Служит для хранения функций для работы с БД
+    
+##### `get_pending`
+Возвращает массив с данными которые обладают 'pending статусом'
+
+### Структура БД
+osm_id - взят как уникальный столбец, наверное надо было свои уникальные значения задавать и сделать отдельный столбец osm_id 
 
 ## services
 
-### `terrain_GEE_USGS.py`
+### [terrain_GEE_USGS.py](services/terrain_GEE_USGS.py)
 
 Мне ai затер, что в батч ee.FeatureCollection можно подавать по 1000-5000 точек - "Это количество обычно обрабатывается быстро"
 

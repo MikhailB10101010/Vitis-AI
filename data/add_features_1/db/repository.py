@@ -2,6 +2,7 @@
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from typing import List, Dict, Union
 
 
 def insert_points(points, db_path):
@@ -62,51 +63,79 @@ def get_row_by_status(db_path, cols_filter, status='pending', AND_or_OR="AND", l
 
 def update_vineyard_features(
     db_path: str,
-    id_in_db: int,
-    features: dict,
+    id_in_db: Union[int, List[int]],
+    features: Union[Dict, List[Dict]],
     status: str = 'done'
 ) -> bool:
     """
-    Функция для обновления данных.
+    Функция для обновления данных. Поддерживает одиночное и массовое обновление.
 
     Args:
         db_path: Путь к БД.
-        id_in_db: Колонки которые надо првоерить, на вход либо str, либо list[str, str, ...].
-        features: Лимит вывода значений.
-        status: str = 'done': Какой статус будет выставляется.
+        id_in_db: Один ID или список ID.
+        features: Один словарь признаков или список словарей.
+        status: Какой статус будет выставляться.
 
     Returns:
-        list[osm_id, lat, lon].
+        bool: Успешность операции.
     """
-    if not features:
+    # Приводим к спискам для единообразной обработки
+    if not isinstance(id_in_db, list):
+        ids = [id_in_db]
+        features_list = [features]
+    else:
+        ids = id_in_db
+        features_list = features if isinstance(features, list) else [features] * len(ids)
+
+    # Проверяем соответствие длин
+    if len(ids) != len(features_list):
+        print(f"Ошибка: количество ID ({len(ids)}) не соответствует количеству наборов признаков ({len(features_list)})")
         return False
 
-    set_clauses = []
-    params = []
-
-    for column, value in features.items():
-        set_clauses.append(f"{column} = ?")
-        set_clauses.append(f"{column}_status = ?")
-        params.extend([value, status])
-
-    # Добавляем метку времени обновления
-    set_clauses.append("updated_at = ?")
-    params.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))  # CURRENT_TIMESTAMP
-
-    # Добавляем ID в параметры для WHERE
-    params.append(id_in_db)
-
-    query = f"""
-        UPDATE vineyard_features SET {', '.join(set_clauses)}
-        WHERE osm_id = ?
-    """
+    if not ids or not features_list:
+        return False
 
     try:
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute(query, params)
+
+            # Обновляем каждый объект
+            for osm_id, feat in zip(ids, features_list):
+                if not feat:  # Пропускаем пустые словари
+                    continue
+
+                set_clauses = []
+                params = []
+
+                for column, value in feat.items():
+                    if value == 'error':
+                        # При ошибке не меняем значение, только статус
+                        set_clauses.append(f"{column}_status = ?")
+                        params.append('error')
+                    elif value == 'NULL' or value is None:
+                        pass
+                    else:
+                        set_clauses.append(f"{column} = ?")
+                        set_clauses.append(f"{column}_status = ?")
+                        params.extend([value, status])
+
+                if not set_clauses:  # Если нечего обновлять
+                    continue
+
+                set_clauses.append("updated_at = ?")
+                params.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                params.append(osm_id)
+
+                query = f"""
+                    UPDATE vineyard_features SET {', '.join(set_clauses)}
+                    WHERE osm_id = ?
+                """
+
+                cursor.execute(query, params)
+
             conn.commit()
             return True
+
     except sqlite3.Error as e:
         print(f"Ошибка при обновлении базы данных: {e}")
         return False
@@ -239,14 +268,16 @@ if __name__ == "__main__":
     db_name = 'vineyard_1.db'
     db_path = db_folder_path / db_name
 
-    # # TEST get_pending
-    ans = get_row_by_status(
-        db_path,
-        "elevation_GEE_USGS_30m_",  # ["elevation_GEE_USGS_30m_status", "slope_GEE_USGS_30m_status"],
-        limit=5
-    )
-    for i in ans:
-        print(i)
+    # TEST get_row_by_status
+    # ans = get_row_by_status(
+    #     db_path,
+    #     "elevation_GEE_USGS_30m",  # ["elevation_GEE_USGS_30m_status", "slope_GEE_USGS_30m_status"],
+    #     limit=5
+    # )
+    # print(ans)
+    # print()
+    # for i in ans:
+    #     print(i)
 
     # TEST create_feature_cols
     # create_feature_cols(db_path, "test")
@@ -256,7 +287,8 @@ if __name__ == "__main__":
 
     # TEST update_vineyard_features
     # id = 4812832
-    # data = {'aspect_GEE_USGS_30m': 0, 'elevation_GEE_USGS_30m': 260, 'hillshade_GEE_USGS_30m': 180, 'slope_GEE_USGS_30m': 1}
+    # # data = {'aspect_GEE_USGS_30m': 0, 'elevation_GEE_USGS_30m': 260, 'hillshade_GEE_USGS_30m': 180, 'slope_GEE_USGS_30m': 1}
+    # data = {'aspect_GEE_USGS_30m': 'error', 'elevation_GEE_USGS_30m': 'error', 'hillshade_GEE_USGS_30m': 'error', 'slope_GEE_USGS_30m': 'error'}
     # update_vineyard_features(db_path, id, data)
 
     # TEST reset_row_dynamically
