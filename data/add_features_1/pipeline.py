@@ -12,10 +12,15 @@ import ee
 import os
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
+import logging
+import sys
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    stream=sys.stdout  # Теперь лог будет идти как обычный текст (белым)
+)
 
-# Запуск GEE
-ee.Authenticate()
-ee.Initialize(project=os.getenv('GEE_PROJECT_ID'))
 
 # Настройки
 BATCH_SIZE = 1000
@@ -29,6 +34,10 @@ db_path = db_folder_path / db_name
 
 
 def run_pipeline():
+    # Запуск GEE
+    ee.Authenticate()
+    ee.Initialize(project=os.getenv('GEE_PROJECT_ID'))
+
     total_processed = 0
 
     # terrain_GEE_USGS
@@ -40,7 +49,7 @@ def run_pipeline():
 
         # Проверка что данные еще есть
         if not pending_items:
-            print("Для terrain_GEE_USGS больше нету не заполненных данных. Выход.")
+            logging.info("Для terrain_GEE_USGS больше нету не заполненных данных. Выход.")
             break
         else:
             cycle_processed += len(pending_items)
@@ -56,7 +65,7 @@ def run_pipeline():
 
         #
         if repository.update_vineyard_features(db_path, osm_id, data_to_db):
-            print(f"{len(osm_id)}\t-\tданных загружено")
+            logging.info(f"{len(osm_id)}\t-\tданных загружено")
 
         time.sleep(SLEEP_TIME)
         # break
